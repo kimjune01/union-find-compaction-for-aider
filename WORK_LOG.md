@@ -134,3 +134,70 @@ WORK_LOG.md                   — This file
 ```
 
 **Phase 1 establishes the baseline.** Ready for human review before Phase 2 (Design).
+
+---
+
+## Phase 2: Design
+
+### Step 4: Systems Comparison
+**File:** `systems-comparison.md`
+
+Compared aider's hierarchical recursive summarization vs union-find structured compaction across:
+- Architecture (recursive split vs forest clusters)
+- Recency handling (degrades with depth vs fixed hot zone)
+- Topic handling (token-boundary splits vs semantic clustering)
+- Cost model (1-4 large calls vs many small calls)
+- Failure modes (cascading loss vs retrieval misses)
+- Trade-offs table
+
+5 open questions for integration identified:
+1. How does union-find interact with `summarize_all()`?
+2. How does stale-safety work with stateful forest?
+3. Output format as aider messages?
+4. Cluster summary voice convention?
+5. Token budget compliance?
+
+### Step 5: Transformation Design
+**File:** `transformation-design.md`
+
+Full Python spec for 4 new modules:
+1. `context_window.py` — Forest + ContextWindow (port from gemini-cli TS)
+2. `embedding_service.py` — TFIDFEmbedder (pure Python, no deps)
+3. `cluster_summarizer.py` — wraps aider's model.simple_send_with_retries()
+4. `chat_summary_uf.py` — ChatSummaryUF(ChatSummary) drop-in subclass
+
+**Critical design resolution: stateless per call.**
+The stale-safety model forced a decision: rebuild the forest from scratch each `summarize()` call instead of persisting across calls. If `summarize_end()` discards the result, a persistent forest would diverge from `done_messages`. Rebuilding avoids this at ~200ms cost (background thread, invisible to user).
+
+All 5 open questions from systems-comparison resolved:
+1. `summarize_all()` → delegates to parent (edit format transitions need single blob)
+2. Stale-safety → stateless rebuild avoids the problem entirely
+3. Output → `[summary_msg, ok_msg, *hot_messages]` matching current structure
+4. Voice → first-person user, matching `prompts.summarize` convention
+5. Budget → structural bounds (10 clusters × 200 tokens + 30 messages × 200 tokens ≈ 8,000)
+
+### Step 6: Design Decisions
+**File:** `DESIGN_DECISIONS.md`
+
+15 decisions, least to most uncertain:
+
+**Least uncertain (1-3):** Summary voice, model cascade, summarize_all delegation
+**Medium (4-9):** Stateless rebuild, overlap window params, max clusters, merge threshold, TF-IDF choice, cluster prompt
+**Most uncertain (10-15):** Output format, no verification pass, no query retrieval, budget enforcement, CLI flag, no persistence
+
+Each decision includes rationale and explicit change trigger.
+
+**Key insight from this phase:** The stateless-per-call design (decision #4) simplifies everything. It eliminates the hardest constraint (stale-safety with stateful forest) at an acceptable cost (~200ms rebuild in background thread). This is the main architectural difference from gemini-cli's implementation, which maintains forest state across the conversation lifecycle.
+
+### Phase 2 Complete
+
+**Working directory contents:**
+```
+current-system-extraction.md  — Code extraction
+current-system-prose.md       — Prose + constraints
+current-system-verification.md — Verification audit
+systems-comparison.md         — Recursive vs union-find
+transformation-design.md      — Full Python spec
+DESIGN_DECISIONS.md           — 15 decisions with rationale
+WORK_LOG.md                   — This file
+```
