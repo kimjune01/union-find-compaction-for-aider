@@ -23,7 +23,7 @@ Both are lossy: information is discarded. The question is which information and 
 6. If summary + tail still too big, recurse (depth + 1)
 7. Base case: ≤4 messages or depth > 3 → summarize everything
 
-**Output format:** `[{"role": "user", "content": "I spoke to you previously...\n{summary}"},  {"role": "assistant", "content": "Ok."}]`
+**Output format:** `summarize_all()` returns `[{"role": "user", "content": "I spoke to you previously...\n{summary}"}]` — a single user message. The `summarize()` wrapper then appends `{"role": "assistant", "content": "Ok."}` if the last message isn't already an assistant message.
 
 **Cost:** 1 LLM call per recursion level (no verification pass). Up to 4 calls for very large histories.
 
@@ -102,10 +102,9 @@ Both are lossy: information is discarded. The question is which information and 
 - **Stale discard:** Result thrown away if done_messages changed during summarization
 
 ### Union-Find Failures
-- **Retrieval miss:** Query doesn't match the right cluster centroid
-- **Cluster fragmentation:** Threshold too strict → too many small clusters
-- **Filler pollution:** Threshold too loose → unrelated messages merged
-- **Dirty cluster at render:** If resolveDirty hasn't run yet, cluster shows raw content (not a real failure — overlap window covers this)
+- **Cluster fragmentation:** Threshold too strict → too many small clusters → forced merges of unrelated topics
+- **Filler pollution:** Threshold too loose → unrelated messages merged into same cluster
+- **Dirty cluster at render:** If resolveDirty hasn't run yet, cluster shows raw content (overlap window covers this in persistent mode; non-issue in rebuild mode)
 
 ## What Each System Optimizes For
 
@@ -128,7 +127,7 @@ Both are lossy: information is discarded. The question is which information and 
 | **Complexity** | Low | High (forest, embeddings, overlap) |
 | **Blocking** | Sometimes (deep recursion) | Never |
 | **Detail recall** | Degrades with depth | Preserved per-cluster |
-| **Budget guarantee** | Strict (recursion enforces) | Soft (cluster count cap) |
+| **Budget guarantee** | Strict (recursion enforces) | Structural bounds + mandatory fallback to recursive |
 | **Cost** | Low call count, large inputs | Higher call count, small inputs |
 | **Provenance** | None | Full |
 | **Implementation effort** | Done | Requires new module |
@@ -147,27 +146,12 @@ Both are lossy: information is discarded. The question is which information and 
 - Non-blocking UX matters (iterative debugging sessions)
 - Multiple topics interleave in the same conversation
 
-## Open Questions for Aider Integration
+## Integration Decisions (Resolved)
 
-1. **How does union-find interact with `summarize_all()`?**
-   - Called during edit format transitions in `Coder.create()`
-   - Separate code path from normal compression
-   - Needs its own implementation
+These questions were identified during comparison and resolved in `transformation-design.md` and `DESIGN_DECISIONS.md`:
 
-2. **How does stale-safety work with stateful forest?**
-   - If `summarize_end()` discards result, forest state must remain consistent
-   - Options: rebuild forest each call, or make forest state independent of result application
-
-3. **What does the output look like as aider messages?**
-   - Current: `[summary_msg, ok_msg]`
-   - Union-find: `[cluster_summaries_msg, ok_msg, *hot_messages]`?
-   - Must match expected message structure in `chunks.done`
-
-4. **How to handle the `summarize` prompt convention?**
-   - Current: "I asked you..." first-person user voice
-   - Cluster summaries: third-person factual? Or adapt to user voice?
-
-5. **Token budget compliance?**
-   - Recursive guarantees fit via recursion
-   - Union-find enforces via cluster count cap + hot zone size
-   - Need to verify total tokens stay within `max_chat_history_tokens`
+1. **`summarize_all()`** → delegates to parent. Edit format transitions need a single blob.
+2. **Stale-safety** → incremental feeding with stale detection. If messages shrank (result applied), rebuild. If messages grew (result discarded), feed the delta.
+3. **Output format** → `[cluster_summaries_msg, ok_msg, *hot_messages]`. The `ok_msg` is appended by `ChatSummaryUF.summarize()`, matching the parent's `summarize()` wrapper behavior.
+4. **Prompt convention** → first-person user voice, matching `prompts.summarize`.
+5. **Token budget** → structural bounds (cluster cap × summary size + hot cap) + mandatory fallback to recursive if output inflates.

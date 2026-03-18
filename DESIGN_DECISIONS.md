@@ -34,15 +34,19 @@
 
 ---
 
-### 4. Rebuild forest each `summarize()` call (stateless)
+### 4. Incremental forest with stale detection
 
-**Decision:** Each call to `summarize()` constructs a fresh `ContextWindow` and feeds all messages from scratch.
+**Decision:** The forest persists across `summarize()` calls. Each call feeds only new messages (`messages[_fed_count:]`). If `_fed_count > len(messages)`, the previous result was applied (messages shrank), so the forest rebuilds from scratch.
 
-**Rationale:** The stale-safety model means `summarize_end()` may discard results. If the forest persists across calls but the result is discarded, the forest's state diverges from `done_messages`. Rebuilding avoids this entirely. Cost: ~200ms for 200 messages (append is <1ms each). This runs in the background thread, so 200ms is invisible.
+**Rationale:** Two cases in aider's stale-safety model:
+- **Result discarded** (messages grew): Forest is still valid. Feed the additional messages incrementally. Cross-call clustering preserved.
+- **Result applied** (messages shrank): Forest was built from pre-summary messages that no longer exist. Rebuild cleanly from the new message list.
 
-**Trade-off:** No cross-call learning. Clusters from previous compressions are lost. Each call re-discovers topic structure from scratch.
+The detection is simple: if `_fed_count > len(messages)`, messages shrank. Otherwise, feed the delta.
 
-**Change trigger:** If cross-call persistence proves valuable AND a safe reconciliation strategy exists for the stale-discard case.
+**Benefits:** Cross-call clustering persists when results are discarded. Topics accumulate structure over multiple attempts. The overlap window is meaningful — background `resolveDirty()` has time to complete between calls.
+
+**Change trigger:** If edge cases arise where the delta detection is insufficient (e.g., messages modified in place rather than appended/replaced).
 
 ---
 
@@ -50,9 +54,7 @@
 
 **Decision:** Messages graduate to the forest at position 26, evict from hot at position 30. Overlap window of ~4 messages.
 
-**Rationale:** Same parameters validated in gemini-cli v2 experiment (0.3ms append+render). The overlap gives `resolveDirty()` time to run before messages leave the hot zone. With aider's background threading, `resolveDirty()` runs inside `summarize_worker()` which executes during user think time.
-
-**Note:** With stateless-per-call design (decision #4), the overlap window matters less — all messages are fed fresh, and `resolveDirty()` runs immediately after. The overlap is still structurally correct and would matter if persistence is added later.
+**Rationale:** Starting points from gemini-cli v2 (0.3ms append+render). Not validated on aider's conversation distribution — tuning expected during experiment phase. The overlap gives `resolveDirty()` time to run before messages leave the hot zone. With incremental persistence (decision #4), the overlap window is meaningful: background resolution between calls covers graduated messages before they evict.
 
 **Change trigger:** If hot zone is too large (wastes tokens) or too small (clusters not resolved in time). Tune by ±5.
 
@@ -142,20 +144,15 @@
 
 ---
 
-### 13. Token budget enforcement via structure, not recursion
+### 13. Token budget enforcement: structural bounds + mandatory fallback
 
-**Decision:** Token budget enforced by structural constraints (cluster count cap × max summary size + hot zone cap), not by recursive splitting.
+**Decision:** Primary enforcement via structural constraints (cluster count cap × summary size + hot zone cap). Hard safety net: mandatory post-render token count check. If output tokens >= input tokens, fall back to `super().summarize()`.
 
-**Rationale:** The current system recursion-guarantees fit. Union-find can't recurse the same way. Instead, structural bounds ensure compliance:
-- 10 clusters × 200 tokens = 2,000 tokens (cold)
-- 30 messages × 200 tokens = 6,000 tokens (hot)
-- Total ≈ 8,000 tokens
+**Rationale:** The current system guarantees fit via recursion — a contract any replacement must honor. Structural bounds (10 clusters × ~200 tokens + 30 messages × ~200 tokens ≈ 8,000 tokens) keep the common case well within budget. The mandatory fallback catches edge cases where summaries are unexpectedly verbose or hot messages are unusually large.
 
-If `max_chat_history_tokens` is 10,000+, this fits. If it's very small, reduce `evict_at` and `max_cold_clusters`.
+**The fallback means union-find never produces a worse result than the current system.** In the worst case, it delegates entirely to recursive summarization — same output as if union-find didn't exist.
 
-**Safety net:** If output exceeds budget, fall back to `super().summarize()`.
-
-**Change trigger:** If budget violations occur in practice. Add a post-render token count check.
+**Change trigger:** If the fallback triggers frequently, investigate why summaries are inflating (prompt tuning, cluster size limits).
 
 ---
 
@@ -185,11 +182,11 @@ If `max_chat_history_tokens` is 10,000+, this fits. If it's very small, reduce `
 
 ## Known Limitations
 
-1. **No cross-call state.** Each `summarize()` call rebuilds the forest. Previous clustering is lost.
-2. **TF-IDF only captures lexical similarity.** Semantically related messages with different vocabulary may not cluster.
-3. **No message edit support.** If a message is edited after clustering, the forest doesn't update.
-4. **No concurrent access.** Forest is single-threaded (runs in one worker thread, so this is fine).
-5. **No retrieval.** All cold clusters rendered, no query-based selection.
+1. **TF-IDF only captures lexical similarity.** Semantically related messages with different vocabulary may not cluster.
+2. **No message edit support.** If a message is edited after clustering, the forest doesn't update.
+3. **No concurrent access.** Forest is single-threaded (runs in one worker thread, so this is fine).
+4. **No retrieval.** All cold clusters rendered, no query-based selection.
+5. **No cross-session persistence.** Forest rebuilt on each session start.
 
 ## Iteration Triggers
 
@@ -198,9 +195,8 @@ If any of these are observed during testing:
 | Observation | Action |
 |------------|--------|
 | Recall worse than recursive | Check cluster quality, tune merge threshold, consider dense embeddings |
-| Budget violations | Reduce evict_at or max_cold_clusters, add post-render check |
+| Budget fallback triggers often | Tune prompt to produce shorter summaries, reduce max_cold_clusters |
 | Cluster summaries miss details | Tune prompt, consider verification for large clusters |
 | Too many forced merges | Increase max_cold_clusters or lower merge threshold |
 | TF-IDF misses obvious clusters | Evaluate adding dense embedding dependency |
-| Stale discard causes issues | Investigate incremental forest reconciliation |
 | summarize_all() needs clusters | Implement cluster-aware format transition |

@@ -187,7 +187,27 @@ All 5 open questions from systems-comparison resolved:
 
 Each decision includes rationale and explicit change trigger.
 
-**Key insight from this phase:** The stateless-per-call design (decision #4) simplifies everything. It eliminates the hardest constraint (stale-safety with stateful forest) at an acceptable cost (~200ms rebuild in background thread). This is the main architectural difference from gemini-cli's implementation, which maintains forest state across the conversation lifecycle.
+**Key insight from this phase:** The incremental feeding with stale detection (decision #4) preserves cross-call clustering while handling aider's stale-safety model cleanly.
+
+### Codex Review + Fixes
+
+**Reviewer:** GPT-5.4 via codex (skeptical methodologist)
+
+**7 issues identified, all fixed:**
+
+1. **Internal inconsistency (stateless vs persistent)** — FIXED. Replaced stateless rebuild with incremental feeding + stale detection. Forest persists across calls when result is discarded; rebuilds only when result is applied (messages shrank). Architecture is honestly persistent now.
+
+2. **Output contract misstated** — FIXED. Clarified that `summarize_all()` returns `[summary_msg]` (one item), while `summarize()` wrapper appends assistant "Ok." message. Corrected in systems-comparison and transformation-design.
+
+3. **Budget compliance soft** — FIXED. Added mandatory post-render token check in `ChatSummaryUF.summarize()`. If output tokens >= input tokens, falls back to `super().summarize()` (recursive). Union-find never produces a worse result than current system.
+
+4. **TF-IDF embedding drift** — FIXED. Explained why drift is manageable: forest rebuilds on result application (stale detection resets embeddings), centroids recomputed on merge, and k=10 clusters with 0.15 threshold is robust to small IDF changes.
+
+5. **Gemini-cli evidence doesn't transfer** — FIXED. Labeled all parameters as "starting points from gemini-cli, not validated on aider." Aider-specific tuning expected during experiment phase.
+
+6. **Silent fallback to concatenation** — FIXED. `ClusterSummarizer` now raises `ValueError` when all models fail, matching current system's contract.
+
+7. **Version drift between docs** — FIXED. Replaced "Open Questions" in systems-comparison with "Integration Decisions (Resolved)" linking to transformation-design and DESIGN_DECISIONS. Removed "retrieval miss" failure mode (design renders all clusters, no query-based retrieval).
 
 ### Phase 2 Complete
 

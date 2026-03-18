@@ -1,10 +1,12 @@
 # Transformation Design: Union-Find Context Compaction for Aider
 
-v2 architecture from day one. Lessons from gemini-cli applied:
+v2 architecture from day one. Structural lessons from gemini-cli applied:
 - `append()` synchronous — no LLM calls
 - `render()` synchronous — cached summaries + hot zone
 - `resolveDirty()` async — batch-summarize dirty clusters in background
 - Overlap window — graduated messages stay in hot zone until background resolves
+
+**Note on parameters:** Default values (`graduate_at=26`, `evict_at=30`, `max_cold_clusters=10`, `merge_threshold=0.15`) are starting points carried from gemini-cli v2. They have not been validated on aider's conversation distribution. Aider-specific tuning is expected during the experiment phase. The architectural properties (non-blocking append, deferred summarization, incremental clustering) transfer regardless of parameter values.
 
 ## Target Architecture
 
@@ -149,7 +151,9 @@ Methods:
 
 **TF:** term frequency in this document (count / total terms).
 
-**IDF:** `log(doc_count / df[term])`. Grows vocabulary incrementally — new terms get new dimensions. Existing embeddings remain comparable because IDF weights evolve slowly.
+**IDF:** `log(doc_count / df[term])`. Grows vocabulary incrementally — new terms get new dimensions.
+
+**Embedding stability:** The TF-IDF vector space evolves as vocabulary grows (new dimensions added, IDF weights shift). This means older embeddings and centroids are computed in a slightly different space than newer ones. In practice this is acceptable because: (a) the forest is rebuilt from scratch whenever a summary result is applied (stale detection resets `_fed_count`), so stale embeddings don't accumulate indefinitely; (b) centroids are recomputed on merge via weighted average of current vectors; (c) with only 10 clusters and a 0.15 similarity threshold, small IDF drift doesn't change clustering decisions. If drift proves problematic, the fix is to re-embed all centroids after each vocabulary update — O(k) with k=10, negligible cost.
 
 ### `src/cluster_summarizer.py`
 
@@ -173,10 +177,10 @@ class ClusterSummarizer:
                 result = model.simple_send_with_retries(messages)
                 if result is not None:
                     return result
-            except Exception:
+            except Exception as e:
+                print(f"Cluster summarization failed for model {model.name}: {str(e)}")
                 continue
-        # Fallback: join texts if all models fail
-        return "\n".join(texts)
+        raise ValueError("cluster summarizer unexpectedly failed for all models")
 ```
 
 **Prompt:**
@@ -206,6 +210,10 @@ from aider import prompts
 class ChatSummaryUF(ChatSummary):
     def __init__(self, models=None, max_tokens=1024):
         super().__init__(models, max_tokens)
+        self._fed_count = 0
+        self._init_context_window()
+
+    def _init_context_window(self):
         self.context_window = ContextWindow(
             embedder=TFIDFEmbedder(),
             summarizer=ClusterSummarizer(self.models),
@@ -214,29 +222,36 @@ class ChatSummaryUF(ChatSummary):
             max_cold_clusters=10,
             merge_threshold=0.15,
         )
-        self._fed_count = 0  # track how many messages have been fed
+        self._fed_count = 0
 
     def summarize(self, messages, depth=0):
-        # Feed new messages into context window
+        if not self.too_big(messages):
+            return messages
+
+        # Stale detection: if messages shrank, previous result was applied.
+        # The forest was built from pre-summary messages that no longer exist.
+        # Rebuild from the new (shorter) message list.
+        if self._fed_count > len(messages):
+            self._init_context_window()
+
+        # Feed only new messages (incremental across calls)
         for msg in messages[self._fed_count:]:
             content = msg.get("content", "")
             if content:
                 self.context_window.append(content)
         self._fed_count = len(messages)
 
-        # Render: cached summaries + hot zone
+        # Render: cached summaries + hot zone (synchronous)
         rendered = self.context_window.render()
 
-        # Resolve dirty clusters (blocking in this thread, but this thread
-        # IS the background summarize_worker — not the main thread)
+        # Resolve dirty clusters (blocks in worker thread, not main thread)
         self.context_window.resolve_dirty()
 
-        # Split rendered into cold (cluster summaries) and hot (recent messages)
+        # Split rendered into cold (cluster summaries) and hot (recent)
         hot_count = self.context_window.hot_count
         if hot_count > 0 and hot_count < len(rendered):
             cold_parts = rendered[:-hot_count]
             summary_text = prompts.summary_prefix + "\n\n".join(cold_parts)
-            # Return summary + hot messages in original dict format
             hot_messages = messages[-hot_count:]
             result = [
                 {"role": "user", "content": summary_text},
@@ -244,10 +259,15 @@ class ChatSummaryUF(ChatSummary):
                 *hot_messages,
             ]
         else:
-            # Everything is in hot zone — no compression needed
             return messages
 
-        # Ensure ends with assistant message
+        # Token budget check: if result is bigger than input, fall back
+        result_tokens = sum(self.token_count(m) for m in result)
+        input_tokens = sum(self.token_count(m) for m in messages)
+        if result_tokens >= input_tokens:
+            return super().summarize(messages, depth)
+
+        # Ensure ends with assistant message (matches parent's contract)
         if result and result[-1]["role"] != "assistant":
             result.append({"role": "assistant", "content": "Ok."})
 
@@ -255,83 +275,21 @@ class ChatSummaryUF(ChatSummary):
 
     def summarize_all(self, messages):
         # Used by Coder.create() during edit format transitions.
-        # Delegate to parent's summarize_all — it produces a single
-        # summary message, which is what format transitions need.
-        # Union-find's per-cluster structure isn't useful here because
-        # the entire history needs to collapse for the new edit format.
+        # Delegates to parent — format transitions need a single summary blob.
         return super().summarize_all(messages)
 ```
 
 **Key design decisions in this class:**
 
-1. **`_fed_count` tracks incremental feeding.** The stale-safety model means `summarize()` may be called multiple times with the same message prefix. We don't re-feed messages already in the forest.
+1. **Incremental feeding with stale detection.** `_fed_count` tracks how many messages have been fed to the forest. On each call, only new messages are appended. If `_fed_count > len(messages)`, it means the previous summarized result was applied (done_messages shrank), so the forest is rebuilt from scratch. If the previous result was discarded (done_messages grew), the forest is still valid and only the new messages need feeding.
 
-2. **`resolveDirty()` blocks in the worker thread.** This is intentional. The worker thread is already a background thread. Blocking here means the main thread continues normally, and `summarize_end()` will join when needed. The overlap window ensures most clusters are already resolved by the time they matter.
+2. **Forest persists across calls.** When `summarize_end()` discards a result (stale), the forest retains its clustering state. The next call feeds the additional messages incrementally. Cross-call clustering is preserved. Topics accumulate structure over multiple summarization attempts.
 
-3. **`summarize_all()` delegates to parent.** Edit format transitions need a single summary, not a cluster structure. The parent's implementation (concatenate + LLM call) is correct for this use case.
+3. **Mandatory post-render token check.** If the union-find output is larger than the input (token inflation), falls back to the parent's recursive summarization. This preserves the current system's budget guarantee as a hard safety net.
 
-4. **Hot messages returned in original dict format.** The hot portion maps back to the original `messages` list, preserving any metadata or formatting the dicts might carry.
+4. **`resolveDirty()` blocks in the worker thread.** The worker thread is already a background thread. Blocking here means the main thread continues normally. The overlap window ensures most clusters are already resolved by the time they matter.
 
-5. **Stale discard tolerance.** If `summarize_end()` discards the result (done_messages changed), the forest is orphaned but `_fed_count` is wrong. On the next call, `_fed_count` will exceed the new messages length, so we reset and re-feed. This handles the stale case correctly.
-
-Wait — stale discard is actually a problem. If the result is discarded, `_fed_count` is ahead of reality. Fix:
-
-```python
-    def summarize(self, messages, depth=0):
-        # Reset if messages don't match expected state (stale discard happened)
-        if self._fed_count > len(messages):
-            self._rebuild(messages)
-
-        # ... rest of method
-```
-
-Actually, the cleaner approach: **rebuild the forest from scratch each call.** The forest is fast to build (append is <1ms per message, 200 messages = 200ms total). This sidesteps all stale-state concerns at the cost of ~200ms per summarization call. Since summarization runs in a background thread and only triggers when history is too big, this is acceptable.
-
-**Revised approach — stateless per call:**
-
-```python
-    def summarize(self, messages, depth=0):
-        if not self.too_big(messages):
-            return messages
-
-        # Rebuild fresh each call — avoids stale state from discarded results
-        self.context_window = ContextWindow(
-            embedder=TFIDFEmbedder(),
-            summarizer=ClusterSummarizer(self.models),
-            graduate_at=26,
-            evict_at=30,
-            max_cold_clusters=10,
-            merge_threshold=0.15,
-        )
-
-        for msg in messages:
-            content = msg.get("content", "")
-            if content:
-                self.context_window.append(content)
-
-        rendered = self.context_window.render()
-        self.context_window.resolve_dirty()
-
-        hot_count = self.context_window.hot_count
-        if hot_count > 0 and hot_count < len(rendered):
-            cold_parts = rendered[:-hot_count]
-            summary_text = prompts.summary_prefix + "\n\n".join(cold_parts)
-            hot_messages = messages[-hot_count:]
-            result = [
-                {"role": "user", "content": summary_text},
-                {"role": "assistant", "content": "Ok."},
-                *hot_messages,
-            ]
-        else:
-            return messages
-
-        if result and result[-1]["role"] != "assistant":
-            result.append({"role": "assistant", "content": "Ok."})
-
-        return result
-```
-
-**Trade-off:** Rebuilding the forest loses cross-call learning (clusters from previous compressions). But this matches the current system's behavior — each `summarize()` call is independent. Cross-call state can be added later if the forest proves valuable to persist.
+5. **`summarize_all()` delegates to parent.** Edit format transitions in `Coder.create()` need a single summary, not cluster structure. The parent's `summarize_all()` returns `[{"role": "user", "content": summary}]` — one user message. The `summarize()` wrapper in the parent then appends `{"role": "assistant", "content": "Ok."}` if needed.
 
 ## Construction Site
 
@@ -382,7 +340,7 @@ parser.add_argument(
 - **Compression algorithm** — recursive split → union-find clustering
 - **Summary granularity** — single blob → per-cluster summaries
 - **Split strategy** — token-count boundary → semantic similarity
-- **Output structure** — `[summary, ok]` → `[cluster_summaries, ok, *hot_messages]`
+- **Output structure** — `[summary]` (+ parent appends ok) → `[cluster_summaries, ok, *hot_messages]`
 - **LLM call pattern** — 1-4 large calls → many small calls
 - **New dependency** — TF-IDF embedding (no external packages, pure Python)
 
@@ -390,12 +348,14 @@ parser.add_argument(
 
 The current system guarantees compliance via recursion: if result still too big, recurse until it fits.
 
-Union-find enforces differently:
+Union-find uses structural bounds as primary enforcement:
 - Cold zone: bounded by `max_cold_clusters × max_summary_size`. With 10 clusters and ~200 token summaries, cold ≈ 2,000 tokens.
 - Hot zone: bounded by `evict_at` messages. With 30 messages averaging ~200 tokens, hot ≈ 6,000 tokens.
 - Total estimate: ~8,000 tokens for compressed history. Well within typical `max_chat_history_tokens` (usually 10,000-40,000).
 
-If compliance becomes an issue, fallback: reduce `max_cold_clusters` or `evict_at`, or delegate to parent's `summarize()` as a safety net.
+**Hard safety net:** After rendering, `summarize()` counts output tokens. If the result is larger than the input (token inflation), it falls back to `super().summarize()` — the parent's recursive algorithm. This guarantees the union-find path never produces a worse result than the current system.
+
+This two-layer approach (structural bounds + mandatory fallback) preserves the current system's budget guarantee while allowing the clustering approach to operate freely within those bounds.
 
 ## Testing Strategy
 
@@ -431,7 +391,7 @@ ContextWindow:
 
 - Calls `model.simple_send_with_retries()` with formatted input
 - Falls back to second model on failure
-- Returns joined text if all models fail
+- Raises `ValueError` if all models fail (matches current system contract)
 
 ### Integration Tests (`test_chat_summary_uf.py`)
 
@@ -440,6 +400,8 @@ ContextWindow:
 - `summarize()` returns valid message list
 - `summarize()` result ends with assistant message
 - `summarize()` output has fewer tokens than input
-- `summarize_all()` delegates to parent
-- Fresh forest per call (stale-safety)
+- `summarize()` falls back to parent if output inflates (budget safety net)
+- `summarize_all()` delegates to parent (returns `[summary_msg]`, no ok)
+- Incremental feeding: second call only appends new messages
+- Stale detection: if messages shrank, forest rebuilds from scratch
 - Output is valid `done_messages` format
