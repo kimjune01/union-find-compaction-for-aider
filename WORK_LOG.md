@@ -98,6 +98,29 @@ This is a stronger baseline than gemini-cli's flat compression. The recursive sp
 
 **Checkpoint: PASSED** — No semantic mismatches in the summarization algorithm.
 
+### Step 3b: Document Interface Constraints (Phase 1.3)
+**File:** `current-system-prose.md` — added "Constraints on Any Replacement" section
+
+**Constraints identified from base_coder.py and main.py:**
+
+1. **Interface contract:** 3 methods — `too_big()`, `summarize()`, `summarize_all()`. The third is used in a separate code path (edit format transitions in `Coder.create()`), not normal summarization.
+
+2. **Message format:** Plain dicts `{"role", "content"}`. No parts arrays, no tool objects. Content is always a string.
+
+3. **Threading model:** Runs in `threading.Thread`. Must be thread-safe. Current system snapshots with `list()`.
+
+4. **Model access:** Constructor receives `(models, max_tokens)`. Models provide `simple_send_with_retries()`, `token_count()`, `info`, `name`.
+
+5. **Construction site:** Built in `main.py`, passed via `summarizer=` kwarg. No existing CLI flag for strategy selection — would need `--chat-history-summarizer` added to `args.py`.
+
+6. **Output consumed directly:** `self.done_messages = self.summarized_done_messages`. Output becomes prompt verbatim.
+
+7. **Stale-safety tolerance:** Result may be discarded if `done_messages` changed during summarization. Replacement must tolerate this without corrupting internal state.
+
+8. **Statelessness assumption:** Current system is stateless between calls. A stateful replacement must handle the discard case gracefully.
+
+**Key insight:** The `summarize_all()` method is a separate contract from `summarize()`. It's called during edit format switches, not during normal compression. A replacement must implement both.
+
 ---
 
 ### Phase 1 Complete

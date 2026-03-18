@@ -92,3 +92,51 @@ The original messages are discarded. The summary is the only record of the compr
 6. **No searchability.** The summary is opaque natural language. Users cannot search their compressed history for specific terms, file names, or decisions. They must read the entire summary to find relevant information.
 
 7. **One-way door.** Original messages are replaced. There is no undo, no expansion, no way to recover the original conversation after compression.
+
+## Constraints on Any Replacement
+
+The current system's integration points in `base_coder.py` and `main.py` define a contract that any replacement must satisfy.
+
+### Interface Contract
+
+A replacement summarizer must be a drop-in for `ChatSummary`. The coder calls exactly three methods:
+
+1. **`too_big(messages) → bool`** — Called in `summarize_start()` to decide whether to launch the background thread. Must accept a list of `{"role": ..., "content": ...}` dicts and return whether they exceed the token budget.
+
+2. **`summarize(messages) → messages`** — Called in `summarize_worker()`. Must accept a message list and return a shorter message list. The returned list must end with an assistant message (the wrapper ensures this, but the inner result should be valid chat structure).
+
+3. **`summarize_all(messages) → messages`** — Called directly in `Coder.create()` when switching edit formats (e.g., from architect mode to code mode). Must summarize an arbitrary message list into a compact form. This is NOT part of the normal summarization flow — it's a separate code path for format transitions.
+
+### Message Format
+
+Messages are plain dicts: `{"role": "user"|"assistant"|"system", "content": str}`. No parts arrays, no function call/response objects, no structured tool outputs. Content is always a string.
+
+### Threading Model
+
+The summarizer runs in a `threading.Thread` launched by `summarize_start()`. The replacement must be thread-safe: it must not mutate shared state that the main thread reads concurrently. The current system achieves this by snapshotting `done_messages` with `list()` before processing.
+
+### Model Access
+
+The summarizer receives a list of model objects at construction. Each model provides:
+- `model.simple_send_with_retries(messages)` — blocking LLM call, returns string or None
+- `model.token_count(msg)` — token count for a message dict
+- `model.info` — dict with `max_input_tokens` and other metadata
+- `model.name` — string identifier
+
+The replacement can use these models or bring its own, but must accept the same constructor signature `(models, max_tokens)`.
+
+### Construction Site
+
+The summarizer is constructed in `main.py` and passed to the coder via the `summarizer=` keyword argument. A CLI flag (e.g., `--chat-history-summarizer`) would select between implementations at this construction site. No existing flag exists — one would need to be added to `args.py`.
+
+### Output Format Expectation
+
+The coder assigns `self.done_messages = self.summarized_done_messages` directly. The replacement's output becomes the new `done_messages` list, which is later included verbatim in the prompt via `chunks.done`. The output must be valid message dicts that the LLM can interpret as conversation history.
+
+### Stale-Safety Assumption
+
+`summarize_end()` compares `self.summarizing_messages == self.done_messages` using value equality. If `done_messages` was modified during summarization (e.g., new turn added), the result is discarded. The replacement must tolerate its result being thrown away without side effects.
+
+### No Persistent State Assumption
+
+The current system is stateless between calls — each `summarize()` invocation works only on the messages passed to it. A stateful replacement (like union-find, which maintains a forest across calls) would need to handle the stale-discard case: if the result is discarded, the internal state must still be consistent for the next call.
