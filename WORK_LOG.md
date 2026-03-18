@@ -47,3 +47,27 @@
 - NOT model-routed to compression-specific models (uses weak_model)
 
 This is a stronger baseline than gemini-cli's flat compression. The recursive splitting preserves more structure.
+
+### Step 2: Write Current System Prose (Phase 1.2)
+**File:** `current-system-prose.md`
+
+**Description covers:**
+- Problem: unbounded done_messages growth
+- Trigger: max_chat_history_tokens threshold, checked after every turn
+- Algorithm: split at half-budget boundary, summarize head, recurse up to depth 4
+- LLM call: format as # ROLE\ncontent, send with summarize prompt, return as user message
+- Model cascade: weak_model first, main_model fallback
+- Background threading: summarize_start/worker/end lifecycle
+- Summary format: first-person user voice, "I spoke to you previously..."
+- Edge cases: short histories, deep recursion, model limits, stale-safety
+
+**Known Problems documented (7):**
+1. Blocking on deep recursion (multiple sequential LLM calls)
+2. Lossy compression with recency bias (older details dropped)
+3. No provenance tracking (can't trace summary to source)
+4. Cascading information loss (summary of summary)
+5. Split-point agnostic to semantics (topics divided at token boundary)
+6. No searchability (opaque text blob)
+7. One-way door (originals discarded)
+
+**Key difference from gemini-cli baseline:** Aider's recursive approach is more sophisticated. The half-budget split preserves recent messages verbatim at each level. But the fundamental problems remain: lossy, irreversible, no provenance.
