@@ -324,16 +324,108 @@ Cut design docs from 5,195 → 1,408 words (73%):
 
 7. **Effect size + probability.** Report CIs and effect sizes, not just p-values. A +7pp trend at p=0.17 is informative even if not significant.
 
-### Phase 3 In Progress
+### Phase 3 Complete
+
+---
+
+## Phase 5: TDD Implementation
+
+### Module 1: context_window.py (Forest + ContextWindow)
+
+**Tests written first** (`tests/test_context_window.py`): 28 tests covering:
+- Forest: insert creates singleton, union merges without LLM call, resolve_dirty calls summarizer per dirty root, compact returns cached summary, nearest_root by cosine similarity
+- ContextWindow: append adds to hot zone, graduation at threshold, eviction, force merge when exceeding max clusters, render returns cold + hot, resolve_dirty delegates
+
+**Implementation** (`src/context_window.py`):
+- `Forest`: union-find with path compression, union-by-size, dirty tracking, centroid averaging
+- `ContextWindow`: hot zone + cold forest, graduation, eviction, rendering
+- **Bug found during TDD**: `nearest_root` was called after insert, finding the newly-inserted node itself (sim=1.0). Fixed by doing nearest lookup *before* inserting.
+
+**28/28 passing.** Committed.
+
+### Module 2: embedding_service.py (TFIDFEmbedder)
+
+**Tests written first** (`tests/test_embedding_service.py`): 15 tests covering:
+- Basics: returns dict, nonempty, empty text returns empty
+- Determinism: same text → same vector, different → different
+- Similarity: identical=1.0, similar > different, disjoint=0.0
+- Vocabulary: grows incrementally, repeated words don't grow
+- Tokenization: case insensitive, splits on non-alphanumeric, filters stopwords
+- IDF: rare words have higher weight, doc count tracking
+
+**Implementation** (`src/embedding_service.py`):
+- Pure Python TF-IDF with sparse dict vectors `{term: weight}`
+- Smoothed IDF: `log(1 + N/df)` to avoid zero weights when there's only one document
+- Tokenization: lowercase, regex split on non-alphanumeric, stopword filtering
+
+**15/15 passing.** Committed.
+
+### Module 3: cluster_summarizer.py (ClusterSummarizer)
+
+**Tests written first** (`tests/test_cluster_summarizer.py`): 8 tests covering:
+- Basics: calls model API, passes texts joined with separator, includes system prompt
+- Cascade: falls back on exception, falls back on None return, ValueError if all fail
+- Single model (not list) accepted
+
+**Implementation** (`src/cluster_summarizer.py`):
+- Wraps `model.simple_send_with_retries()` with model cascade
+- Prompt preserves file paths, function names, error messages; first-person user voice
+
+**8/8 passing.** Committed.
+
+### Module 4: chat_summary_uf.py (ChatSummaryUF)
+
+**Tests written first** (`tests/test_chat_summary_uf.py`): 15 tests covering:
+- Subclass: is subclass of ChatSummary, same constructor args
+- Output format: list of dicts, ends with assistant, starts with summary_prefix
+- Budget compliance: result < input, falls back on inflation, falls back when > max_tokens
+- Compression hole: falls back to recursive when <27 large messages (no cold clusters)
+- Incremental feeding: only feeds new messages, preserves forest across calls
+- Stale detection: rebuilds on message shrinkage, feeds delta on growth
+- Delegation: summarize_all delegates to parent
+- Passthrough: returns unchanged when within budget
+
+**Implementation** (`src/chat_summary_uf.py`):
+- `ChatSummaryUF(ChatSummary)` drop-in subclass
+- Incremental feeding with `_fed_count` tracking
+- Stale detection: `_fed_count > len(messages)` triggers rebuild
+- Two-check budget safety: (a) result > max_tokens, (b) result >= input tokens
+- Compression hole fix: else branch → `super().summarize()` (not return unchanged)
+
+**Also updated** `context_window.py`: `_cosine_similarity` now handles both list vectors (from mock tests) and sparse dict vectors (from TFIDFEmbedder). Centroid averaging in `union` handles both formats.
+
+**66/66 total tests passing.** Committed.
+
+### Phase 5 Complete
 
 **Working directory contents:**
 ```
-current-system-extraction.md  — Code extraction
-current-system-prose.md       — Prose + constraints
-current-system-verification.md — Verification audit
-systems-comparison.md         — Recursive vs union-find
-transformation-design.md      — Full Python spec
-DESIGN_DECISIONS.md           — 3 decisions + defaults table
-PREREGISTRATION.md            — Exploratory benchmark validation
-WORK_LOG.md                   — This file
+src/
+  __init__.py
+  context_window.py    — Forest + ContextWindow (241 lines)
+  embedding_service.py — TFIDFEmbedder (77 lines)
+  cluster_summarizer.py — ClusterSummarizer (55 lines)
+  chat_summary_uf.py   — ChatSummaryUF (79 lines)
+tests/
+  __init__.py
+  conftest.py
+  test_context_window.py    — 28 tests
+  test_embedding_service.py — 15 tests
+  test_cluster_summarizer.py — 8 tests
+  test_chat_summary_uf.py   — 15 tests
+current-system-extraction.md
+current-system-prose.md
+current-system-verification.md
+systems-comparison.md
+transformation-design.md
+DESIGN_DECISIONS.md
+PREREGISTRATION.md
+WORK_LOG.md
 ```
+
+**Bugs found during TDD (3):**
+1. `nearest_root` self-match: looking up nearest after insert found the node itself. Fixed by querying before insert.
+2. `_cosine_similarity` type mismatch: Forest tests used list vectors, TFIDFEmbedder produces dict vectors. Fixed by supporting both.
+3. Stale detection test assumed small messages would exceed budget: needed content long enough to trigger `too_big()`.
+
+**Next: Phase 6 — Experiment harness** (24 conversations, 192 paired observations, blinded judge).
