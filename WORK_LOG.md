@@ -166,15 +166,12 @@ Full Python spec for 4 new modules:
 3. `cluster_summarizer.py` — wraps aider's model.simple_send_with_retries()
 4. `chat_summary_uf.py` — ChatSummaryUF(ChatSummary) drop-in subclass
 
-**Critical design resolution: stateless per call.**
-The stale-safety model forced a decision: rebuild the forest from scratch each `summarize()` call instead of persisting across calls. If `summarize_end()` discards the result, a persistent forest would diverge from `done_messages`. Rebuilding avoids this at ~200ms cost (background thread, invisible to user).
-
 All 5 open questions from systems-comparison resolved:
 1. `summarize_all()` → delegates to parent (edit format transitions need single blob)
-2. Stale-safety → stateless rebuild avoids the problem entirely
+2. Stale-safety → incremental feeding with stale detection (see discussion below)
 3. Output → `[summary_msg, ok_msg, *hot_messages]` matching current structure
 4. Voice → first-person user, matching `prompts.summarize` convention
-5. Budget → structural bounds (10 clusters × 200 tokens + 30 messages × 200 tokens ≈ 8,000)
+5. Budget → structural bounds + mandatory fallback to recursive
 
 ### Step 6: Design Decisions
 **File:** `DESIGN_DECISIONS.md`
@@ -182,12 +179,62 @@ All 5 open questions from systems-comparison resolved:
 15 decisions, least to most uncertain:
 
 **Least uncertain (1-3):** Summary voice, model cascade, summarize_all delegation
-**Medium (4-9):** Stateless rebuild, overlap window params, max clusters, merge threshold, TF-IDF choice, cluster prompt
+**Medium (4-9):** Incremental forest, overlap window params, max clusters, merge threshold, TF-IDF choice, cluster prompt
 **Most uncertain (10-15):** Output format, no verification pass, no query retrieval, budget enforcement, CLI flag, no persistence
 
 Each decision includes rationale and explicit change trigger.
 
-**Key insight from this phase:** The incremental feeding with stale detection (decision #4) preserves cross-call clustering while handling aider's stale-safety model cleanly.
+### Discussion: Gemini-CLI vs Aider Differences
+
+Key differences identified that affect the union-find port:
+
+| Aspect | Gemini-CLI | Aider |
+|--------|-----------|-------|
+| Algorithm | Flat single-snapshot | Recursive split (stronger baseline) |
+| Verification | Two-phase (generate + verify) | Single-phase |
+| Tool outputs | Reverse token budget, truncation | None — just strings |
+| Threading | None (blocking) | Background thread (existing async plumbing) |
+| Failure handling | Token inflation check, previous-failure tracking | ValueError propagation, stale-safety discard |
+| Stale-safety | None needed (blocking) | Value equality check, discards if changed |
+| `summarize_all()` | Not a separate contract | Separate code path for edit format transitions |
+
+**Three things that matter most:**
+1. Stale-safety is the hardest new constraint (gemini-cli never has results discarded)
+2. Existing threading is an advantage (resolveDirty can slot into summarize_worker)
+3. No tool output handling simplifies the implementation
+
+### Discussion: Stale-Safety Resolution
+
+**Initial approach:** Stateless rebuild each call (~200ms, simple but loses cross-call state).
+
+**Better approach:** Incremental feeding with stale detection.
+- If `_fed_count > len(messages)`: previous result was applied (messages shrank) → rebuild
+- If `_fed_count <= len(messages)`: previous result was discarded (messages grew) → feed delta
+- Forest persists across discarded calls, accumulating topic structure
+- Only rebuilds when the underlying messages have been replaced
+
+**Why stale-safety exists:** Prevents data loss. If summarization runs while user adds new messages, applying the result would replace `done_messages` with a compressed version that doesn't include the new messages. The equality check is the simplest correct solution — discard and retry next turn.
+
+### Discussion: Data Structure Choice
+
+Considered whether union-find is over-engineered at k=10 clusters. A plain dict of clusters achieves the same operations:
+- Add: scan 10 centroids, pick nearest. O(k).
+- Merge: combine two entries. O(1).
+- Closest pair: 45 comparisons. Negligible.
+- Render: iterate values. O(k).
+
+Decision: keep union-find for now (matches gemini-cli port), but could simplify to dict later. The data structure is not the value — the clustering approach is.
+
+### Discussion: Honest Value Proposition
+
+With stateless rebuild abandoned for incremental persistence, the value proposition is:
+1. **Better summaries** — per-cluster (topic-coherent) vs per-token-boundary (arbitrary splits)
+2. **Lower cost** — many small LLM calls vs fewer large ones
+3. **Non-blocking potential** — though in aider's threading model, resolveDirty still blocks the worker thread
+
+What does NOT survive into done_messages: provenance, expandability, searchability. These exist on the summarizer object but not in the output. Could add commands like `/expand` later.
+
+**Key insight:** The incremental feeding with stale detection (decision #4) preserves cross-call clustering while handling aider's stale-safety model cleanly.
 
 ### Codex Review + Fixes
 
@@ -208,6 +255,22 @@ Each decision includes rationale and explicit change trigger.
 6. **Silent fallback to concatenation** — FIXED. `ClusterSummarizer` now raises `ValueError` when all models fail, matching current system's contract.
 
 7. **Version drift between docs** — FIXED. Replaced "Open Questions" in systems-comparison with "Integration Decisions (Resolved)" linking to transformation-design and DESIGN_DECISIONS. Removed "retrieval miss" failure mode (design renders all clusters, no query-based retrieval).
+
+### Codex Review #2 + Fixes
+
+**Reviewer:** GPT-5.4 via codex (second pass after first 7 fixes)
+
+**5 issues identified, all fixed:**
+
+1. **Budget check inadequate (HIGH)** — FIXED. The fallback only triggered when result was larger than input, not when it exceeded `max_tokens`. A 20k→12k result with an 8k budget would pass through. Added two-check logic: (a) `result_tokens > self.max_tokens` catches budget violations; (b) `result_tokens >= input_tokens` catches inflation. Updated prose in transformation-design and DESIGN_DECISIONS to match.
+
+2. **Drops message roles, absorbs system messages (HIGH)** — FIXED in prior edit. Role filtering (`if role not in ("USER", "ASSISTANT"): continue`) skips system messages. Content is prefixed with `# ROLE\n` to preserve role structure in cluster summaries, matching current system's `# USER\n{content}\n# ASSISTANT\n{content}` format.
+
+3. **Renders before resolving dirty clusters (HIGH)** — FIXED. Swapped order: `resolve_dirty()` now runs before `render()`. This ensures dirty clusters have fresh summaries when rendered. Updated both the code spec and the integration diagram.
+
+4. **"Never blocks" claim overstated (MEDIUM)** — FIXED. Replaced "Never blocks" with "Blocks at summarize_end() join (same as recursive, but fewer/smaller LLM calls)" in structural differences table. Updated trade-offs table and optimizes-for list. The honest claim is shorter blocking, not zero blocking.
+
+5. **Stale detection gap on equal-length replacement (MEDIUM)** — ACKNOWLEDGED with mitigation analysis. `_fed_count > len(messages)` only detects shrinkage. Equal-length replacement is narrow: aider only modifies `done_messages` by appending or replacing with summary. `summarize_all()` during `Coder.create()` typically reconstructs the summarizer. Outer `summarize_end()` stale check provides a safety net. Content hash comparison documented as the fix if this proves insufficient.
 
 ### Phase 2 Complete
 

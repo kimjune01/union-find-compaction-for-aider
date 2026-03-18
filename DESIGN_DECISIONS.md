@@ -46,6 +46,8 @@ The detection is simple: if `_fed_count > len(messages)`, messages shrank. Other
 
 **Benefits:** Cross-call clustering persists when results are discarded. Topics accumulate structure over multiple attempts. The overlap window is meaningful — background `resolveDirty()` has time to complete between calls.
 
+**Known gap:** `_fed_count > len(messages)` detects shrinkage but not equal-length replacement (e.g., `summarize_all()` producing same number of messages). In practice this is narrow: (a) aider only modifies `done_messages` by appending (grows) or replacing with summary (shrinks); (b) `summarize_all()` is called during `Coder.create()` which typically reconstructs the summarizer; (c) even if the forest has stale data, the outer `summarize_end()` stale check provides a safety net. If this proves insufficient, the fix is to store a content hash of `messages[0]` and compare on each call.
+
 **Change trigger:** If edge cases arise where the delta detection is insufficient (e.g., messages modified in place rather than appended/replaced).
 
 ---
@@ -146,7 +148,7 @@ The detection is simple: if `_fed_count > len(messages)`, messages shrank. Other
 
 ### 13. Token budget enforcement: structural bounds + mandatory fallback
 
-**Decision:** Primary enforcement via structural constraints (cluster count cap × summary size + hot zone cap). Hard safety net: mandatory post-render token count check. If output tokens >= input tokens, fall back to `super().summarize()`.
+**Decision:** Primary enforcement via structural constraints (cluster count cap × summary size + hot zone cap). Hard safety net: two mandatory checks after rendering. (1) If output tokens exceed `max_tokens`, fall back to `super().summarize()`. (2) If output tokens >= input tokens (no compression achieved), fall back to `super().summarize()`.
 
 **Rationale:** The current system guarantees fit via recursion — a contract any replacement must honor. Structural bounds (10 clusters × ~200 tokens + 30 messages × ~200 tokens ≈ 8,000 tokens) keep the common case well within budget. The mandatory fallback catches edge cases where summaries are unexpectedly verbose or hot messages are unusually large.
 

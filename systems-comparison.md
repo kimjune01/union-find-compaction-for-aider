@@ -58,7 +58,7 @@ Both are lossy: information is discarded. The question is which information and 
 | **Split strategy** | Token-count boundary | Semantic similarity |
 | **Recursion** | Up to depth 4 | No recursion — flat forest of clusters |
 | **When LLM runs** | During summarize_worker thread | During resolveDirty (background) |
-| **Blocking** | Blocks at summarize_end() join | Never blocks (overlap window) |
+| **Blocking** | Blocks at summarize_end() join | Blocks at summarize_end() join (same as recursive, but fewer/smaller LLM calls) |
 | **Summary count** | 1 (everything collapses to one) | N (one per cluster, typically ~10) |
 | **Original messages** | Discarded | Retained in cluster children |
 | **Provenance** | None | Parent pointers → source messages |
@@ -116,7 +116,7 @@ Both are lossy: information is discarded. The question is which information and 
 
 ### Union-Find Optimizes For:
 - **Detail preservation** — Per-cluster summaries retain topic-specific facts
-- **Non-blocking operation** — No LLM calls in the critical path
+- **Shorter blocking** — Fewer, smaller LLM calls mean the worker thread finishes faster
 - **Semantic coherence** — Similarity-based clustering keeps related messages together
 - **Expandability** — Original messages retrievable
 
@@ -125,7 +125,7 @@ Both are lossy: information is discarded. The question is which information and 
 | Dimension | Recursive | Union-Find |
 |-----------|-----------|------------|
 | **Complexity** | Low | High (forest, embeddings, overlap) |
-| **Blocking** | Sometimes (deep recursion) | Never |
+| **Blocking** | Sometimes (deep recursion) | Less often (fewer/smaller LLM calls in worker thread) |
 | **Detail recall** | Degrades with depth | Preserved per-cluster |
 | **Budget guarantee** | Strict (recursion enforces) | Structural bounds + mandatory fallback to recursive |
 | **Cost** | Low call count, large inputs | Higher call count, small inputs |
@@ -143,7 +143,7 @@ Both are lossy: information is discarded. The question is which information and 
 **Union-find wins when:**
 - Conversations are long (100+ messages, multiple compression events)
 - Users reference specific details from earlier in conversation
-- Non-blocking UX matters (iterative debugging sessions)
+- Lower blocking latency matters (iterative debugging sessions)
 - Multiple topics interleave in the same conversation
 
 ## Integration Decisions (Resolved)

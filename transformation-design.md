@@ -27,8 +27,8 @@ move_back_cur_messages()
           → summarizer.summarize(done_messages)
               → ChatSummaryUF.summarize():
                   1. Feed all messages into context_window.append()
-                  2. Render: context_window.render()
-                  3. Resolve: context_window.resolveDirty()  ← only async part
+                  2. Resolve: context_window.resolveDirty()  ← blocking LLM work
+                  3. Render: context_window.render()          ← uses fresh summaries
                   4. Format as aider messages and return
   → User types next message (concurrent)
   → summarize_end()
@@ -234,18 +234,24 @@ class ChatSummaryUF(ChatSummary):
         if self._fed_count > len(messages):
             self._init_context_window()
 
-        # Feed only new messages (incremental across calls)
+        # Feed only new user/assistant messages (incremental across calls)
+        # Skip system messages — matches current summarize_all() which only
+        # processes USER and ASSISTANT roles.
         for msg in messages[self._fed_count:]:
+            role = msg.get("role", "").upper()
+            if role not in ("USER", "ASSISTANT"):
+                continue
             content = msg.get("content", "")
             if content:
-                self.context_window.append(content)
+                self.context_window.append(f"# {role}\n{content}")
         self._fed_count = len(messages)
 
-        # Render: cached summaries + hot zone (synchronous)
-        rendered = self.context_window.render()
-
-        # Resolve dirty clusters (blocks in worker thread, not main thread)
+        # Resolve dirty clusters first so render() returns fresh summaries.
+        # Blocks in worker thread, not main thread.
         self.context_window.resolve_dirty()
+
+        # Render: resolved summaries + hot zone (synchronous)
+        rendered = self.context_window.render()
 
         # Split rendered into cold (cluster summaries) and hot (recent)
         hot_count = self.context_window.hot_count
@@ -261,8 +267,11 @@ class ChatSummaryUF(ChatSummary):
         else:
             return messages
 
-        # Token budget check: if result is bigger than input, fall back
+        # Token budget check: must fit within max_tokens
         result_tokens = sum(self.token_count(m) for m in result)
+        if result_tokens > self.max_tokens:
+            return super().summarize(messages, depth)
+        # Also verify compression actually helped
         input_tokens = sum(self.token_count(m) for m in messages)
         if result_tokens >= input_tokens:
             return super().summarize(messages, depth)
@@ -285,9 +294,9 @@ class ChatSummaryUF(ChatSummary):
 
 2. **Forest persists across calls.** When `summarize_end()` discards a result (stale), the forest retains its clustering state. The next call feeds the additional messages incrementally. Cross-call clustering is preserved. Topics accumulate structure over multiple summarization attempts.
 
-3. **Mandatory post-render token check.** If the union-find output is larger than the input (token inflation), falls back to the parent's recursive summarization. This preserves the current system's budget guarantee as a hard safety net.
+3. **Mandatory token budget check.** Two checks: (a) if the result exceeds `max_tokens`, fall back to recursive; (b) if the result isn't smaller than the input (token inflation), fall back to recursive. This preserves the current system's budget guarantee as a hard safety net.
 
-4. **`resolveDirty()` blocks in the worker thread.** The worker thread is already a background thread. Blocking here means the main thread continues normally. The overlap window ensures most clusters are already resolved by the time they matter.
+4. **`resolveDirty()` blocks in the worker thread.** The worker thread is already a background thread launched by `summarize_start()`. Blocking here means the main thread continues normally — the user is not blocked. However, `summarize_end()` joins the worker thread before the next LLM call, so a fast-typing user can still block there. This is the same blocking behavior as the current recursive system, not worse.
 
 5. **`summarize_all()` delegates to parent.** Edit format transitions in `Coder.create()` need a single summary, not cluster structure. The parent's `summarize_all()` returns `[{"role": "user", "content": summary}]` — one user message. The `summarize()` wrapper in the parent then appends `{"role": "assistant", "content": "Ok."}` if needed.
 
@@ -353,7 +362,7 @@ Union-find uses structural bounds as primary enforcement:
 - Hot zone: bounded by `evict_at` messages. With 30 messages averaging ~200 tokens, hot ≈ 6,000 tokens.
 - Total estimate: ~8,000 tokens for compressed history. Well within typical `max_chat_history_tokens` (usually 10,000-40,000).
 
-**Hard safety net:** After rendering, `summarize()` counts output tokens. If the result is larger than the input (token inflation), it falls back to `super().summarize()` — the parent's recursive algorithm. This guarantees the union-find path never produces a worse result than the current system.
+**Hard safety net:** After rendering, `summarize()` counts output tokens and checks two conditions: (1) does the result exceed `max_tokens`? (2) is the result not smaller than the input? If either is true, it falls back to `super().summarize()` — the parent's recursive algorithm. This guarantees the union-find path never produces a worse result than the current system.
 
 This two-layer approach (structural bounds + mandatory fallback) preserves the current system's budget guarantee while allowing the clustering approach to operate freely within those bounds.
 
