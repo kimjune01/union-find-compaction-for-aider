@@ -128,9 +128,8 @@ class TestForestResolveDirty:
         forest.union("m0", "m1")
         forest.resolve_dirty()
 
-        # Second merge with existing cluster
-        root = forest.roots()[0]
-        forest.union(root, "m2")
+        # Second merge: use m0 explicitly (the merged root) with m2
+        forest.union("m0", "m2")
         forest.resolve_dirty()
 
         # Second call should include previous summary + new content

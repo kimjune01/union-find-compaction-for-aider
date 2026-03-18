@@ -7,10 +7,16 @@ import math
 
 
 def _cosine_similarity(a, b):
-    """Cosine similarity between two vectors. Returns 0.0 if either is zero."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(x * x for x in b))
+    """Cosine similarity between two vectors (list or sparse dict). Returns 0.0 if either is zero."""
+    if isinstance(a, dict) and isinstance(b, dict):
+        keys = set(a.keys()) & set(b.keys())
+        dot = sum(a[k] * b[k] for k in keys)
+        norm_a = math.sqrt(sum(v * v for v in a.values()))
+        norm_b = math.sqrt(sum(v * v for v in b.values()))
+    else:
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
         return 0.0
     return dot / (norm_a * norm_b)
@@ -104,12 +110,19 @@ class Forest:
         self._dirty_inputs.pop(old_root, None)
 
         # Average the centroids
-        emb_a = self._embedding.get(new_root, [])
-        emb_b = self._embedding.get(old_root, [])
+        emb_a = self._embedding.get(new_root, {})
+        emb_b = self._embedding.get(old_root, {})
         if emb_a and emb_b:
-            self._embedding[new_root] = [
-                (a + b) / 2.0 for a, b in zip(emb_a, emb_b)
-            ]
+            if isinstance(emb_a, dict) and isinstance(emb_b, dict):
+                all_keys = set(emb_a.keys()) | set(emb_b.keys())
+                self._embedding[new_root] = {
+                    k: (emb_a.get(k, 0.0) + emb_b.get(k, 0.0)) / 2.0
+                    for k in all_keys
+                }
+            else:
+                self._embedding[new_root] = [
+                    (a + b) / 2.0 for a, b in zip(emb_a, emb_b)
+                ]
 
         return new_root
 
