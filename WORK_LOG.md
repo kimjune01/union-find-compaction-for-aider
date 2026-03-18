@@ -297,6 +297,35 @@ Cut design docs from 5,195 → 1,408 words (73%):
 
 ### Phase 2 Complete
 
+---
+
+## Phase 3: Preregistration
+
+### Step 7: Preregistration
+**File:** `PREREGISTRATION.md`
+
+**Inputs combined:**
+- gemini-cli `PREREGISTRATION-V2.md` — structure, hypotheses, tuning policy, claim ladder
+- metacognition `ROUND3_RETROSPECTIVE.md` — futility rules, effect size + probability, pre-registration integrity lessons
+
+**Key design choices:**
+
+1. **Exploratory from the start.** Gemini-cli v1 was confirmatory, failed, had to reclassify. Starting exploratory avoids that.
+
+2. **Futility rules.** Metacognition Round 3 oscillated 0.90-0.94 for 17 batches wasting compute. Added: if after 50% of data, effect size < 2pp and p > 0.50, stop.
+
+3. **192 paired observations.** Gemini-cli had 96 pairs, underpowered at p=0.136. 24 conversations × 8 questions gives ~80% power for 5pp effect.
+
+4. **Honest latency reporting.** H2b reports `resolveDirty()` latency separately — prevents hiding deferred work. Learned from gemini-cli where v1 "non-blocking" claim was misleading.
+
+5. **Contemporaneous baselines.** Rerun recursive in same environment, don't reuse old numbers.
+
+6. **Dual-model judging.** Learned from metacognition — catches judge-specific quirks.
+
+7. **Effect size + probability.** Report CIs and effect sizes, not just p-values. A +7pp trend at p=0.17 is informative even if not significant.
+
+### Phase 3 In Progress
+
 **Working directory contents:**
 ```
 current-system-extraction.md  — Code extraction
@@ -305,5 +334,6 @@ current-system-verification.md — Verification audit
 systems-comparison.md         — Recursive vs union-find
 transformation-design.md      — Full Python spec
 DESIGN_DECISIONS.md           — 3 decisions + defaults table
+PREREGISTRATION.md            — Exploratory benchmark validation
 WORK_LOG.md                   — This file
 ```
