@@ -71,3 +71,43 @@ This is a stronger baseline than gemini-cli's flat compression. The recursive sp
 7. One-way door (originals discarded)
 
 **Key difference from gemini-cli baseline:** Aider's recursive approach is more sophisticated. The half-budget split preserves recent messages verbatim at each level. But the fundamental problems remain: lossy, irreversible, no provenance.
+
+### Step 3: Verify Current System (Phase 1.3)
+**File:** `current-system-verification.md`
+
+**Verification approach:** Line-by-line semantic audit of prose claims against code extraction.
+
+**Results:**
+- Trigger logic: MATCH
+- Token budget: MATCH
+- Split algorithm: MATCH
+- Recursion depth: MATCH
+- LLM call format: MATCH
+- Model cascade: MATCH
+- Output format: MATCH
+- Threading model: MATCH
+- Stale-safety: MATCH
+- Prompt instructions: MATCH
+- Edge cases: MATCH
+- Known problems (7/7): VERIFIED
+
+**Deltas found:** 3, all low severity:
+1. Chat history restore trigger (same mechanism, different entry point — not mentioned in prose)
+2. summarize_end() called from summarize_start() (sequencing detail omitted)
+3. move_back_cur_messages() optional message parameter (integration detail)
+
+**Checkpoint: PASSED** — No semantic mismatches in the summarization algorithm.
+
+---
+
+### Phase 1 Complete
+
+**Working directory contents:**
+```
+current-system-extraction.md  — Code extraction from aider/history.py + base_coder.py
+current-system-prose.md       — Plain-language description with Known Problems
+current-system-verification.md — Semantic audit: prose ↔ code equivalence
+WORK_LOG.md                   — This file
+```
+
+**Phase 1 establishes the baseline.** Ready for human review before Phase 2 (Design).
