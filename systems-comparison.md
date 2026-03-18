@@ -1,157 +1,31 @@
-# Systems Comparison: Hierarchical Recursive vs Union-Find
+# Systems Comparison: Recursive vs Union-Find
 
-This document compares aider's current hierarchical recursive summarization with union-find structured compaction.
-
-## Common Problem
-
-Both systems address unbounded chat history growth. As conversations continue, `done_messages` accumulates tokens beyond what the LLM can accept. Both compress old history to stay within `max_chat_history_tokens`.
-
-Both are lossy: information is discarded. The question is which information and how much.
-
-## Architectural Comparison
-
-### Current System: Hierarchical Recursive Summarization
-
-**Structure:** Nested half-budget splits. Each level keeps the recent half verbatim and summarizes the older half. Recursion up to depth 4.
-
-**Process:**
-1. Check if `done_messages` exceeds token budget
-2. Split at half-budget boundary (reverse iteration from end)
-3. Adjust split to assistant message boundary
-4. Truncate head to model's `max_input_tokens - 512`
-5. Summarize head via LLM → single user message
-6. If summary + tail still too big, recurse (depth + 1)
-7. Base case: ≤4 messages or depth > 3 → summarize everything
-
-**Output format:** `summarize_all()` returns `[{"role": "user", "content": "I spoke to you previously...\n{summary}"}]` — a single user message. The `summarize()` wrapper then appends `{"role": "assistant", "content": "Ok."}` if the last message isn't already an assistant message.
-
-**Cost:** 1 LLM call per recursion level (no verification pass). Up to 4 calls for very large histories.
-
-**Timing:** Runs in background thread. Blocks only at `summarize_end()` if thread hasn't finished.
-
----
-
-### Union-Find: Structured Compaction
-
-**Structure:** Forest of message clusters, each with its own summary. Two-zone architecture with overlap window.
-
-**Process:**
-1. New message appended to hot zone (synchronous, <1ms)
-2. When ungraduated count exceeds `graduateAt`, oldest graduates to cold forest
-3. Graduated message becomes singleton cluster or merges with nearest (cosine similarity)
-4. If cluster count exceeds cap, closest pair merges
-5. All merges are structural only — mark cluster dirty, no LLM calls
-6. `resolveDirty()` batch-summarizes dirty clusters in background
-7. Overlap window: graduated messages stay in hot zone until `evictAt`, giving background time to resolve
-
-**Output format:** Cold cluster summaries + hot zone messages verbatim.
-
-**Cost:** 1 LLM call per dirty cluster at resolve time. ~10 calls per 120 messages (gemini-cli v2 result: 35 total across 12 conversations).
-
-**Timing:** `append()` and `render()` are synchronous (<1ms). `resolveDirty()` runs in background.
+Both systems compress `done_messages` to stay within `max_chat_history_tokens`. Both are lossy. The question is which information gets dropped.
 
 ## Structural Differences
 
-| Aspect | Hierarchical Recursive | Union-Find |
-|--------|----------------------|------------|
-| **Compression unit** | Half-budget chunk | Per-cluster (topic-grouped) |
-| **Split strategy** | Token-count boundary | Semantic similarity |
-| **Recursion** | Up to depth 4 | No recursion — flat forest of clusters |
-| **When LLM runs** | During summarize_worker thread | During resolveDirty (background) |
-| **Blocking** | Blocks at summarize_end() join | Blocks at summarize_end() join (same as recursive, but fewer/smaller LLM calls) |
-| **Summary count** | 1 (everything collapses to one) | N (one per cluster, typically ~10) |
+| Aspect | Recursive | Union-Find |
+|--------|-----------|------------|
+| **Compression unit** | Half-budget chunk (token boundary) | Per-cluster (topic-grouped) |
+| **When LLM runs** | 1-4 large calls in worker thread | Many small calls in worker thread |
+| **Blocking** | Blocks at `summarize_end()` join | Same — but fewer/smaller calls finish faster |
+| **Summary count** | 1 (everything collapses to one blob) | ~10 (one per cluster) |
+| **Recency** | Degrades with recursion depth | Fixed: hot zone (30 msgs) always verbatim |
+| **Topic coherence** | Splits at token boundary, not topic | Clusters by semantic similarity |
 | **Original messages** | Discarded | Retained in cluster children |
-| **Provenance** | None | Parent pointers → source messages |
-| **Expandability** | No | `expand(clusterId)` → original messages |
+| **Budget guarantee** | Strict (recursion enforces) | Structural bounds + fallback to recursive |
 
-## How Each Handles Recency
+## Trade-Offs
 
-**Recursive:** Each split level keeps the recent half verbatim. At depth 0, the newest ~50% stays. But if recursion goes to depth 2, the "recent" half of level 1's head has already been summarized once. Recency preservation degrades with depth.
+| Dimension | Recursive wins | Union-Find wins |
+|-----------|---------------|-----------------|
+| **Simplicity** | 143 lines, no data structures | Forest, embeddings, overlap window |
+| **Detail recall** | | Per-cluster summaries preserve topic-specific facts |
+| **Cost** | Fewer calls (but larger inputs) | More calls (but smaller inputs), 0.79x total tokens in gemini-cli |
+| **Blocking time** | | Smaller LLM calls = worker finishes faster |
+| **Short conversations** | Never triggers, no overhead | |
+| **Long multi-topic** | | Topics cluster regardless of when they occurred |
 
-**Union-find:** Hot zone (30 messages) always stays verbatim. No degradation with conversation length. The overlap window (messages 26-30) provides a buffer for background resolution.
+## Integration
 
-## How Each Handles Topics
-
-**Recursive:** Splits are token-based, not topic-based. A conversation about authentication that transitions to database schema at the split boundary gets divided arbitrarily. Half the auth context goes to the summary, half stays verbatim.
-
-**Union-find:** Clusters form by semantic similarity. Authentication messages cluster together regardless of when they occurred. Database messages form their own cluster. Summaries are topic-coherent.
-
-## Cost Model
-
-**Recursive (200-message conversation):**
-- If summary + tail fits after one split: 1 LLM call
-- If recursion needed: 2-4 LLM calls (sequential, each depends on previous result)
-- Each call processes a large chunk (~100+ messages at level 0)
-- Total: 1-4 calls per compression event, compression triggers ~every 100 messages
-- Over 200 messages: ~2-8 LLM calls
-
-**Union-find (200-message conversation, from gemini-cli v2 experiment):**
-- ~35 calls across 12 conversations (avg ~3 calls per 120-message conversation)
-- Each call processes one cluster's dirty inputs (1 summary + few raw messages)
-- Input per call is small (~1000 tokens vs ~50,000 for recursive)
-- Total token consumption: 0.79x of flat compression (gemini-cli v2 result)
-
-**Key insight:** Union-find makes more calls but each is much smaller. The total tokens consumed are comparable or lower.
-
-## Failure Modes
-
-### Recursive Failures
-- **Cascading loss:** Summary of summary through 4 levels compounds imprecision
-- **Semantic-blind splits:** Topics divided at token boundaries lose context
-- **Deep recursion blocks:** 4 sequential LLM calls can take 10-30s
-- **Stale discard:** Result thrown away if done_messages changed during summarization
-
-### Union-Find Failures
-- **Cluster fragmentation:** Threshold too strict → too many small clusters → forced merges of unrelated topics
-- **Filler pollution:** Threshold too loose → unrelated messages merged into same cluster
-- **Dirty cluster at render:** If resolveDirty hasn't run yet, cluster shows raw content (overlap window covers this in persistent mode; non-issue in rebuild mode)
-
-## What Each System Optimizes For
-
-### Recursive Optimizes For:
-- **Simplicity** — Single algorithm, no data structures beyond message lists
-- **Correctness** — Depth limit prevents infinite recursion, stale check prevents data loss
-- **Budget compliance** — Recursion guarantees result fits within max_tokens
-- **Existing integration** — Background thread already plumbed
-
-### Union-Find Optimizes For:
-- **Detail preservation** — Per-cluster summaries retain topic-specific facts
-- **Shorter blocking** — Fewer, smaller LLM calls mean the worker thread finishes faster
-- **Semantic coherence** — Similarity-based clustering keeps related messages together
-- **Expandability** — Original messages retrievable
-
-## Key Trade-Offs
-
-| Dimension | Recursive | Union-Find |
-|-----------|-----------|------------|
-| **Complexity** | Low | High (forest, embeddings, overlap) |
-| **Blocking** | Sometimes (deep recursion) | Less often (fewer/smaller LLM calls in worker thread) |
-| **Detail recall** | Degrades with depth | Preserved per-cluster |
-| **Budget guarantee** | Strict (recursion enforces) | Structural bounds + mandatory fallback to recursive |
-| **Cost** | Low call count, large inputs | Higher call count, small inputs |
-| **Provenance** | None | Full |
-| **Implementation effort** | Done | Requires new module |
-
-## When Each System Wins
-
-**Recursive wins when:**
-- Conversations are short (<50 messages, never triggers depth >0)
-- Summarization rarely triggers (stays under budget)
-- Implementation simplicity is valued over recall quality
-- Strict budget compliance is required
-
-**Union-find wins when:**
-- Conversations are long (100+ messages, multiple compression events)
-- Users reference specific details from earlier in conversation
-- Lower blocking latency matters (iterative debugging sessions)
-- Multiple topics interleave in the same conversation
-
-## Integration Decisions (Resolved)
-
-These questions were identified during comparison and resolved in `transformation-design.md` and `DESIGN_DECISIONS.md`:
-
-1. **`summarize_all()`** → delegates to parent. Edit format transitions need a single blob.
-2. **Stale-safety** → incremental feeding with stale detection. If messages shrank (result applied), rebuild. If messages grew (result discarded), feed the delta.
-3. **Output format** → `[cluster_summaries_msg, ok_msg, *hot_messages]`. The `ok_msg` is appended by `ChatSummaryUF.summarize()`, matching the parent's `summarize()` wrapper behavior.
-4. **Prompt convention** → first-person user voice, matching `prompts.summarize`.
-5. **Token budget** → structural bounds (cluster cap × summary size + hot cap) + mandatory fallback to recursive if output inflates.
+Union-find runs inside the existing `summarize_start/worker/end` lifecycle. No changes to threading, stale-safety, or `summarize_all()`. The only new integration point is a CLI flag to select the strategy.
