@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `PYTHONHASHSEED` and refers to changes in `Python/pythonrun.c`, but it never names the specific function in that file that would be modified. Since `Py_Initialize` is not stated or strongly implied, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `string_hash` being optimized in `Objects/unicodeobject.c`. That provides the specific file needed to answer the question, even though the exact phrasing about \u201cinspected to ensure proper salt-based hash caching\u201d is paraphrased."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the resize logic fix addressed \"a RuntimeError regarding dictionary size changes during iteration.\" That directly matches the expected error from `test_dict.py`, namely `RuntimeError: dictionary changed size during iteration`."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the user \u201cmoved the seeding logic to `Python/hashseed.c`.\u201d That directly answers the question about the new file used to avoid crowding `Python/pythonrun.c`."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the resize logic changes were made while \"maintaining the 24-byte size of PyDictEntry on 64-bit systems.\" That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \"I documented the PYTHONHASHSEED environment variable in `Doc/using/cmdline.rst`.\" That directly matches the question about which file was updated to document how `PYTHONHASHSEED` affects security."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly names the environment variable several times. It states that `PYTHONHASHSEED` was documented and that setting it controls whether hashing is random or deterministic, which directly matches the expected answer."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that cross-platform compatibility was confirmed, including \"CryptGenRandom usage for MSVC in Include/pyport.h.\" It also later says Windows CI is passing because \"we are utilizing CryptGenRandom to seed the hash secret.\" That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention `Py_Initialize`, but only in connection with moving secret salt initialization to `Python/pylifecycle.c`. It does not state that `Py_Initialize` in `Python/pythonrun.c` was the function proposed for handling `PYTHONHASHSEED`, so the expected answer is not recoverable from the summary itself."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly ties string-hashing work and performance investigation for small strings to `Objects/unicodeobject.c`. While it does not name `string_hash` directly, that file is the clear location strongly implied for inspecting string hash behavior and caching."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a dictionary creation regression and that `Lib/test/test_dict.py` was used to confirm the fix, but it never states the exact failing error message. The expected detail, `RuntimeError: dictionary changed size during iteration`, is not present or strongly implied."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses several files involved in seed initialization, including `Python/initconfig.c`, `Python/pylifecycle.c`, and `Python/pythonrun.c`. However, it never mentions a new file named `Python/hashseed.c`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on hash randomization, affected files, CI status, and documentation. It does not mention `PyDictEntry` layout or its memory size on 64-bit systems, so the expected answer cannot be determined from this summary."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that `Doc/using/cmdline.rst` was updated. Since that file is the command-line/environment variable documentation area and it is mentioned alongside `PYTHONHASHSEED` work, it contains enough information to identify the expected file."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \u201cBetter to expose a `PYTHONHASHSEED` environment variable\u201d and then confirms that if it is not set to `'random'`, hashing is deterministic. That directly identifies the environment variable used to pin the seed."
+  },
+  {
+    "conversation_id": "python-cpython-57912",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that on Windows they were \"utilizing CryptGenRandom to seed the hash secret.\" That directly matches the expected answer and leaves no ambiguity about the specific API used."
+  }
+]

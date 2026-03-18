@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "python-cpython-46888",
+    "question": "Which file was the user initially examining when encountering inconsistencies with the re module API?",
+    "expected_answer": "Lib/regex.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "python-cpython-46888",
+    "question": "Which C file was identified as having an incorrect mapping for the re.VERBOSE flag?",
+    "expected_answer": "Modules/_regex.c",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "python-cpython-46888",
+    "question": "Which function in Modules/_regex.c was used to add missing constants during module initialization?",
+    "expected_answer": "init_regex",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "python-cpython-46888",
+    "question": "What standard library tool was implemented in Lib/regex.py to improve pattern compilation speed?",
+    "expected_answer": "functools.lru_cache",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "python-cpython-46888",
+    "question": "What error did the reviewer identify regarding memory leaks in the regex_exec function?",
+    "expected_answer": "Incorrect reference counting",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "python-cpython-46888",
+    "question": "Which function was used as a replacement for malloc to prevent buffer overflows during Unicode processing?",
+    "expected_answer": "PyMem_Calloc",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "python-cpython-46888",
+    "question": "What documentation file was updated to reflect the new regex features and flag mappings?",
+    "expected_answer": "Doc/library/regex.rst",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "python-cpython-46888",
+    "question": "What specific BPO issue number is referenced throughout the regex module implementation process?",
+    "expected_answer": "BPO-2636",
+    "category": "decision",
+    "region": "early"
+  }
+]

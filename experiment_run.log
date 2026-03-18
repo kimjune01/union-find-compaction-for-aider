@@ -1,0 +1,162 @@
+2026-03-18 09:11:54,812 INFO Model: gemini/gemini-3.1-flash-lite-preview
+2026-03-18 09:11:54,816 INFO === Stage 1: Generate Conversations ===
+2026-03-18 09:11:54,816 INFO Fetching issues from pallets/flask
+2026-03-18 09:11:55,677 INFO   Generating conversation for pallets-flask-1361
+2026-03-18 09:12:59,060 INFO   Generated 200 messages for pallets-flask-1361
+2026-03-18 09:13:02,065 INFO   Generating conversation for pallets-flask-1575
+2026-03-18 09:14:17,277 INFO   Generated 200 messages for pallets-flask-1575
+2026-03-18 09:14:20,282 INFO   Generating conversation for pallets-flask-1421
+2026-03-18 09:15:32,659 INFO   Generated 200 messages for pallets-flask-1421
+2026-03-18 09:15:35,664 INFO   Generating conversation for pallets-flask-1169
+2026-03-18 09:16:39,835 INFO   Generated 200 messages for pallets-flask-1169
+2026-03-18 09:16:42,839 INFO Fetching issues from tiangolo/fastapi
+2026-03-18 09:16:43,764 INFO   Generating conversation for tiangolo-fastapi-1228
+2026-03-18 09:18:06,060 INFO   Generated 200 messages for tiangolo-fastapi-1228
+2026-03-18 09:18:09,064 INFO   Generating conversation for tiangolo-fastapi-1663
+2026-03-18 09:19:26,684 INFO   Generated 200 messages for tiangolo-fastapi-1663
+2026-03-18 09:19:29,688 INFO Fetching issues from django/django
+2026-03-18 09:19:30,395 INFO Fetching issues from pytorch/pytorch
+2026-03-18 09:19:31,108 INFO   Generating conversation for pytorch-pytorch-494
+2026-03-18 09:20:49,084 INFO   Generated 200 messages for pytorch-pytorch-494
+2026-03-18 09:20:52,089 INFO Fetching issues from microsoft/vscode
+2026-03-18 09:20:53,309 INFO   Generating conversation for microsoft-vscode-93814
+2026-03-18 09:22:17,762 INFO   Generated 200 messages for microsoft-vscode-93814
+2026-03-18 09:22:20,767 INFO   Generating conversation for microsoft-vscode-191229
+2026-03-18 09:23:31,490 INFO   Generated 200 messages for microsoft-vscode-191229
+2026-03-18 09:23:34,496 INFO   Generating conversation for microsoft-vscode-249326
+2026-03-18 09:24:47,685 INFO   Generated 200 messages for microsoft-vscode-249326
+2026-03-18 09:24:50,690 INFO   Generating conversation for microsoft-vscode-224
+2026-03-18 09:26:04,786 INFO   Generated 204 messages for microsoft-vscode-224
+2026-03-18 09:26:07,787 INFO Fetching issues from psf/requests
+2026-03-18 09:26:08,839 INFO   Generating conversation for psf-requests-2966
+2026-03-18 09:27:19,129 INFO   Generated 200 messages for psf-requests-2966
+2026-03-18 09:27:22,134 INFO   Generating conversation for psf-requests-1573
+2026-03-18 09:28:30,913 INFO   Generated 200 messages for psf-requests-1573
+2026-03-18 09:28:33,918 INFO   Generating conversation for psf-requests-2455
+2026-03-18 09:29:29,794 INFO   Generated 200 messages for psf-requests-2455
+2026-03-18 09:29:32,799 INFO   Generating conversation for psf-requests-4006
+2026-03-18 09:30:44,256 INFO   Generated 200 messages for psf-requests-4006
+2026-03-18 09:30:47,262 INFO Fetching issues from encode/httpx
+2026-03-18 09:30:48,031 INFO Fetching issues from python/cpython
+2026-03-18 09:30:49,023 INFO   Generating conversation for python-cpython-46888
+2026-03-18 09:31:52,951 INFO   Generated 200 messages for python-cpython-46888
+2026-03-18 09:31:55,954 INFO   Generating conversation for python-cpython-57912
+2026-03-18 09:32:56,541 INFO   Generated 200 messages for python-cpython-57912
+2026-03-18 09:32:59,547 INFO Stage 1 complete: 17 conversations
+2026-03-18 09:32:59,547 INFO === Stage 2: Generate Questions ===
+2026-03-18 09:32:59,547 INFO   Generating questions for pallets-flask-1361
+2026-03-18 09:33:02,275 INFO   Generated 8 questions for pallets-flask-1361
+2026-03-18 09:33:02,275 INFO   Generating questions for pallets-flask-1575
+2026-03-18 09:33:05,589 INFO   Generated 8 questions for pallets-flask-1575
+2026-03-18 09:33:05,589 INFO   Generating questions for pallets-flask-1421
+2026-03-18 09:33:09,031 INFO   Generated 8 questions for pallets-flask-1421
+2026-03-18 09:33:09,031 INFO   Generating questions for pallets-flask-1169
+2026-03-18 09:33:12,825 INFO   Generated 8 questions for pallets-flask-1169
+2026-03-18 09:33:12,825 INFO   Generating questions for tiangolo-fastapi-1228
+2026-03-18 09:33:15,790 INFO   Generated 8 questions for tiangolo-fastapi-1228
+2026-03-18 09:33:15,790 INFO   Generating questions for tiangolo-fastapi-1663
+2026-03-18 09:33:18,659 INFO   Generated 8 questions for tiangolo-fastapi-1663
+2026-03-18 09:33:18,659 INFO   Generating questions for pytorch-pytorch-494
+2026-03-18 09:33:22,448 INFO   Generated 8 questions for pytorch-pytorch-494
+2026-03-18 09:33:22,448 INFO   Generating questions for microsoft-vscode-93814
+2026-03-18 09:33:24,869 INFO   Generated 8 questions for microsoft-vscode-93814
+2026-03-18 09:33:24,869 INFO   Generating questions for microsoft-vscode-191229
+2026-03-18 09:33:27,761 INFO   Generated 8 questions for microsoft-vscode-191229
+2026-03-18 09:33:27,761 INFO   Generating questions for microsoft-vscode-249326
+2026-03-18 09:33:30,850 INFO   Generated 8 questions for microsoft-vscode-249326
+2026-03-18 09:33:30,850 INFO   Generating questions for microsoft-vscode-224
+2026-03-18 09:33:33,213 INFO   Generated 8 questions for microsoft-vscode-224
+2026-03-18 09:33:33,213 INFO   Generating questions for psf-requests-2966
+2026-03-18 09:33:35,656 INFO   Generated 8 questions for psf-requests-2966
+2026-03-18 09:33:35,656 INFO   Generating questions for psf-requests-1573
+2026-03-18 09:33:37,957 INFO   Generated 8 questions for psf-requests-1573
+2026-03-18 09:33:37,957 INFO   Generating questions for psf-requests-2455
+2026-03-18 09:33:41,184 INFO   Generated 8 questions for psf-requests-2455
+2026-03-18 09:33:41,184 INFO   Generating questions for psf-requests-4006
+2026-03-18 09:33:43,644 INFO   Generated 8 questions for psf-requests-4006
+2026-03-18 09:33:43,644 INFO   Generating questions for python-cpython-46888
+2026-03-18 09:33:46,887 INFO   Generated 8 questions for python-cpython-46888
+2026-03-18 09:33:46,888 INFO   Generating questions for python-cpython-57912
+2026-03-18 09:33:50,404 INFO   Generated 8 questions for python-cpython-57912
+2026-03-18 09:33:50,404 INFO Stage 2 complete: 136 questions
+2026-03-18 09:33:50,404 INFO === Stage 3: Run Systems + Judge ===
+2026-03-18 09:33:50,404 INFO   [1/17] Running pallets-flask-1361 (200 msgs)
+2026-03-18 09:35:28,301 INFO   Compression done in 97.9s — UF: 32 msgs, Rec: 26 msgs
+2026-03-18 09:35:28,301 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:36:56,181 INFO   Scores — UF: 4/8, Rec: 1/8
+2026-03-18 09:36:56,181 INFO   [2/17] Running pallets-flask-1575 (200 msgs)
+2026-03-18 09:38:24,131 INFO   Compression done in 88.0s — UF: 30 msgs, Rec: 30 msgs
+2026-03-18 09:38:24,132 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:39:45,778 INFO   Scores — UF: 2/8, Rec: 2/8
+2026-03-18 09:39:45,779 INFO   [3/17] Running pallets-flask-1421 (200 msgs)
+2026-03-18 09:41:10,527 INFO   Compression done in 84.7s — UF: 28 msgs, Rec: 24 msgs
+2026-03-18 09:41:10,527 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:42:28,160 INFO   Scores — UF: 3/8, Rec: 3/8
+2026-03-18 09:42:28,163 INFO   [4/17] Running pallets-flask-1169 (200 msgs)
+2026-03-18 09:43:48,387 INFO   Compression done in 80.2s — UF: 30 msgs, Rec: 29 msgs
+2026-03-18 09:43:48,388 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:45:07,290 INFO   Scores — UF: 5/8, Rec: 7/8
+2026-03-18 09:45:07,290 INFO   [5/17] Running tiangolo-fastapi-1228 (200 msgs)
+2026-03-18 09:47:10,883 INFO   Compression done in 123.6s — UF: 32 msgs, Rec: 39 msgs
+2026-03-18 09:47:10,884 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:48:34,441 INFO   Scores — UF: 0/8, Rec: 3/8
+2026-03-18 09:48:34,441 INFO   [6/17] Running tiangolo-fastapi-1663 (200 msgs)
+2026-03-18 09:50:05,142 INFO   Compression done in 90.7s — UF: 30 msgs, Rec: 28 msgs
+2026-03-18 09:50:05,143 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:51:27,157 INFO   Scores — UF: 2/8, Rec: 3/8
+2026-03-18 09:51:27,157 INFO   [7/17] Running pytorch-pytorch-494 (200 msgs)
+2026-03-18 09:53:26,383 INFO   Compression done in 119.2s — UF: 30 msgs, Rec: 24 msgs
+2026-03-18 09:53:26,386 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:54:46,504 INFO   Scores — UF: 1/8, Rec: 1/8
+2026-03-18 09:54:46,504 INFO   [8/17] Running microsoft-vscode-93814 (200 msgs)
+2026-03-18 09:56:19,350 INFO   Compression done in 92.8s — UF: 32 msgs, Rec: 38 msgs
+2026-03-18 09:56:19,351 INFO   Judging 8 questions × 2 systems
+2026-03-18 09:57:35,770 INFO   Scores — UF: 1/8, Rec: 2/8
+2026-03-18 09:57:35,771 INFO   [9/17] Running microsoft-vscode-191229 (200 msgs)
+2026-03-18 09:59:22,438 INFO   Compression done in 106.7s — UF: 38 msgs, Rec: 32 msgs
+2026-03-18 09:59:22,439 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:00:37,244 INFO   Scores — UF: 2/8, Rec: 4/8
+2026-03-18 10:00:37,244 INFO   [10/17] Running microsoft-vscode-249326 (200 msgs)
+2026-03-18 10:03:02,495 INFO   Compression done in 145.3s — UF: 32 msgs, Rec: 26 msgs
+2026-03-18 10:03:02,498 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:04:21,693 INFO   Scores — UF: 2/8, Rec: 2/8
+2026-03-18 10:04:21,693 INFO   [11/17] Running microsoft-vscode-224 (204 msgs)
+2026-03-18 10:06:09,690 INFO   Compression done in 108.0s — UF: 32 msgs, Rec: 39 msgs
+2026-03-18 10:06:09,690 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:07:31,397 INFO   Scores — UF: 1/8, Rec: 3/8
+2026-03-18 10:07:31,398 INFO   [12/17] Running psf-requests-2966 (200 msgs)
+2026-03-18 10:08:33,377 INFO   Compression done in 62.0s — UF: 32 msgs, Rec: 36 msgs
+2026-03-18 10:08:33,378 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:09:51,843 INFO   Scores — UF: 4/8, Rec: 3/8
+2026-03-18 10:09:51,844 INFO   Futility check: b=2, c=1, p=1.000, cost=1.07x
+2026-03-18 10:09:51,844 INFO   [13/17] Running psf-requests-1573 (200 msgs)
+2026-03-18 10:11:04,513 INFO   Compression done in 72.7s — UF: 30 msgs, Rec: 26 msgs
+2026-03-18 10:11:04,514 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:12:26,823 INFO   Scores — UF: 6/8, Rec: 4/8
+2026-03-18 10:12:26,823 INFO   [14/17] Running psf-requests-2455 (200 msgs)
+2026-03-18 10:13:14,718 INFO   Compression done in 47.9s — UF: 41 msgs, Rec: 39 msgs
+2026-03-18 10:13:14,719 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:14:36,041 INFO   Scores — UF: 5/8, Rec: 5/8
+2026-03-18 10:14:36,043 INFO   [15/17] Running psf-requests-4006 (200 msgs)
+2026-03-18 10:15:37,855 INFO   Compression done in 61.8s — UF: 34 msgs, Rec: 36 msgs
+2026-03-18 10:15:37,856 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:17:08,413 INFO   Scores — UF: 7/8, Rec: 5/8
+2026-03-18 10:17:08,413 INFO   [16/17] Running python-cpython-46888 (200 msgs)
+2026-03-18 10:18:36,235 INFO   Compression done in 87.8s — UF: 32 msgs, Rec: 29 msgs
+2026-03-18 10:18:36,236 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:19:54,349 INFO   Scores — UF: 2/8, Rec: 4/8
+2026-03-18 10:19:54,349 INFO   [17/17] Running python-cpython-57912 (200 msgs)
+2026-03-18 10:21:02,787 INFO   Compression done in 68.4s — UF: 36 msgs, Rec: 33 msgs
+2026-03-18 10:21:02,788 INFO   Judging 8 questions × 2 systems
+2026-03-18 10:22:38,662 INFO   Scores — UF: 7/8, Rec: 4/8
+2026-03-18 10:22:38,662 INFO === Stage 4: Analysis ===
+2026-03-18 10:22:38,663 INFO H1 Recall: UF=54/136 (39.7%), Rec=56/136 (41.2%)
+2026-03-18 10:22:38,663 INFO   Effect: -1.5pp, McNemar chi2=1.33, p=0.2482
+2026-03-18 10:22:38,663 INFO   Discordant pairs: b=3 (UF+/Rec-), c=0 (Rec+/UF-)
+2026-03-18 10:22:38,664 INFO   Sign test: wins=5, losses=7, ties=5, p=0.7744
+2026-03-18 10:22:38,667 INFO H2a Append:  p50=0.03ms, p90=0.06ms, p95=0.08ms, max=0.19ms
+2026-03-18 10:22:38,667 INFO H2a Render:  p50=0.01ms, p90=0.02ms, p95=0.02ms, max=0.03ms
+2026-03-18 10:22:38,667 INFO H2b Resolve: p50=1523.61ms, p90=2475.78ms, p95=4151.18ms, max=8571.12ms
+2026-03-18 10:22:38,667 INFO H3 Cost: UF=382348 tokens, Rec=335232 tokens, ratio=1.14x
+2026-03-18 10:22:38,668 INFO Results written to experiment/data/RESULTS.md
+2026-03-18 10:22:38,672 INFO Experiment complete.

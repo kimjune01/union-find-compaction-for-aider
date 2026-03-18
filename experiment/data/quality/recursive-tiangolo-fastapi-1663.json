@@ -1,0 +1,124 @@
+{
+  "conversation_id": "tiangolo-fastapi-1663",
+  "system": "recursive",
+  "compressed_history": [
+    {
+      "role": "user",
+      "content": "I spoke to you previously about a number of things.\nI asked you previously for help troubleshooting CORS errors across `main.py`, `security.py`, and `auth_utils.py` using `CORSMiddleware`, `JSONResponse`, and `config.py`. We documented these in `docs/en/docs/tutorial/cors.md`, addressed regressions in `tests/test_middleware.py` and `test_cors.py` via `conftest.py`, and implemented a custom `BaseHTTPMiddleware` in `main.py`. We also updated `fastapi/middleware/cors.py` to address GitHub issue #1663, using `httpx` and `TestClient` in `tests/test_middleware_cors.py` and `ProxyHeadersMiddleware`. Most recently, I resolved intermittent 500 errors in `main.py` caused by shared state in `middleware_utils.py` by refactoring to use request context, which I verified with `pytest-asyncio` and `asyncio.gather` in `tests/test_cors.py` and documented in `CONTRIBUTING.md`.\n\nI then discovered that `CORSMiddleware` does not handle WebSocket origin verification in `app/api/ws.py`. You confirmed that `starlette/middleware/cors.py` is designed for HTTP, so I implemented a manual origin check within the WebSocket connection logic. I decided to reuse the whitelist from `middleware_utils.py` and updated `tests/test_ws.py` to include the 'Origin' header in the `test_client.websocket_connect` call to resolve test failures.\n\nFinally, I refactored this logic into a reusable `verify_origin` helper function in `app/utils.py`, which raises a `WebSocketDisconnect` from `fastapi` if validation fails. I am currently finalizing this by adding a unit test for the utility in `tests/test_utils.py` to ensure it correctly returns a 403 status code for unauthorized origins."
+    },
+    {
+      "role": "user",
+      "content": "Everything is running smoothly. I've updated 'CONTRIBUTING.md' to note that WebSockets require manual origin validation until we see native support in 'CORSMiddleware'."
+    },
+    {
+      "role": "assistant",
+      "content": "That is a huge help for the community. The repository contributors will definitely appreciate that clarity on WebSockets."
+    },
+    {
+      "role": "user",
+      "content": "I'm ready to merge these changes into the main branch. Any final advice on the 'pytest' configuration before I finalize the PR?"
+    },
+    {
+      "role": "assistant",
+      "content": "Just check that your 'conftest.py' is not forcing global origin settings that might conflict with these new localized tests."
+    },
+    {
+      "role": "user",
+      "content": "Good catch! I found a stray config in 'pytest.ini'. Removing it, and everything is green. Thanks for the final review!"
+    },
+    {
+      "role": "assistant",
+      "content": "You're very welcome. It looks like you have a solid, production-ready solution now. Looking forward to seeing the PR merged."
+    },
+    {
+      "role": "user",
+      "content": "I've pushed the final commit to the branch, but I noticed a slight performance drop in the test suite for 'test_middleware_performance.py'. Is that expected with the added logic?"
+    },
+    {
+      "role": "assistant",
+      "content": "It could be an overhead from the 'verify_origin' function calls inside the middleware loop. Have you profiled if the string comparison for origins is causing latency?"
+    },
+    {
+      "role": "user",
+      "content": "I checked with 'cProfile', and it's negligible. Actually, the slowdown in 'test_middleware_performance.py' was due to redundant log initialization in each test iteration."
+    },
+    {
+      "role": "assistant",
+      "content": "Ok."
+    },
+    {
+      "role": "assistant",
+      "content": "That makes sense. If you move the logger setup to a fixture in 'conftest.py' with session scope, it should stabilize your execution times significantly."
+    },
+    {
+      "role": "user",
+      "content": "Good idea. I'll move that into a 'pytest.fixture(scope='session')' block. That should clean up the noise in the logs and improve test runtime."
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect. Once that's cleaned up, check if you are still seeing consistent results across different Python versions in your CI matrix."
+    },
+    {
+      "role": "user",
+      "content": "All tests are green on Python 3.8 through 3.12. The build is looking solid. I'm tagging the PR for review by the FastAPI core team."
+    },
+    {
+      "role": "assistant",
+      "content": "Great work. Ensure you link the original Issue #1663 in your PR description so the maintainers have the necessary context for the fix."
+    },
+    {
+      "role": "user",
+      "content": "Done. I've added a comment to #1663 explaining that this implementation covers the gap in 'CORSMiddleware' for WebSocket origin handling specifically."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent communication. Transparency with the issue reporters makes it much easier for the maintainers to justify merging your PR."
+    },
+    {
+      "role": "user",
+      "content": "I've just received a comment from a maintainer suggesting an adjustment to 'CORSMiddleware.dispatch'. They want the origin check to be more configurable."
+    },
+    {
+      "role": "assistant",
+      "content": "That's a reasonable request. Can you allow a custom 'origin_validator' callable in the middleware constructor as an optional argument?"
+    },
+    {
+      "role": "user",
+      "content": "I can modify 'CORSMiddleware' to accept an 'on_origin_error' callback. That would keep it flexible for users who need custom auth logging or headers."
+    },
+    {
+      "role": "assistant",
+      "content": "Exactly. Just ensure the default behavior remains backwards compatible so you don't break existing 'FastAPI' applications currently using the middleware."
+    },
+    {
+      "role": "user",
+      "content": "I'll use a type-hinted optional function in the 'CORSMiddleware' class definition. This should satisfy the requirement without causing breaking changes."
+    },
+    {
+      "role": "assistant",
+      "content": "Sounds like a plan. Make sure to update the docstrings in 'starlette/middleware/cors.py' to document the new optional parameter clearly."
+    },
+    {
+      "role": "user",
+      "content": "Updated the docstrings and added a new test case for the custom validator callback. Re-running the suite now to ensure no regressions."
+    },
+    {
+      "role": "assistant",
+      "content": "You are covering all bases. This level of diligence is exactly why this PR will likely be accepted without many more rounds of revisions."
+    },
+    {
+      "role": "user",
+      "content": "The PR has been merged! Thanks for guiding me through the implementation and the testing strategy. It was a long journey from #1663."
+    },
+    {
+      "role": "assistant",
+      "content": "Congratulations on the successful merge! Your contribution to the ecosystem is significant. Enjoy the well-deserved victory on this FastAPI improvement."
+    }
+  ],
+  "compression_time_ms": 24981.55583400012,
+  "total_prompt_tokens": 89492,
+  "total_completion_tokens": 23555,
+  "append_latencies_ms": [],
+  "render_latencies_ms": [],
+  "resolve_dirty_latencies_ms": []
+}

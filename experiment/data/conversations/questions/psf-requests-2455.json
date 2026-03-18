@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "psf-requests-2455",
+    "question": "Which specific filename was identified as the location of the SSL context issue in the initial traceback?",
+    "expected_answer": "requests/packages/urllib3/util/ssl_.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "psf-requests-2455",
+    "question": "What error message was observed on endpoints that previously worked in version 2.5.1?",
+    "expected_answer": "CERTIFICATE_VERIFY_FAILED",
+    "category": "error_message",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "psf-requests-2455",
+    "question": "Which library does requests use to provide the standard path for CA certificates?",
+    "expected_answer": "certifi",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "psf-requests-2455",
+    "question": "Which test file was created to prevent the SSL regression from appearing in future releases?",
+    "expected_answer": "tests/test_ssl.py",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "psf-requests-2455",
+    "question": "What linter tool did the developer use to check for code violations?",
+    "expected_answer": "flake8",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "psf-requests-2455",
+    "question": "What specific exception was raised during CI testing for the PyPy environment?",
+    "expected_answer": "AttributeError: module ssl has no attribute HAS_SNI",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "psf-requests-2455",
+    "question": "Which function was used to verify that the SSL context is created with correct parameters?",
+    "expected_answer": "unittest.mock",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "psf-requests-2455",
+    "question": "Which file was updated with documentation to guide users regarding session-level verification behavior?",
+    "expected_answer": "docs/user/advanced.rst",
+    "category": "filename",
+    "region": "late"
+  }
+]

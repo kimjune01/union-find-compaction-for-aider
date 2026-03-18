@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the work was to resolve \u201cGitHub issue #1573\u201d about password-protected SSL client certificates. That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `requests/sessions.py` and `requests/api.py` in connection with handling password-protected certs, but it does not clearly state that the public interface for this feature should be exposed specifically in `requests/sessions.py`. Because that exact detail is not explicit, the expected answer cannot be determined with confidence."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the failing test `test_ssl_client_cert_with_password` was in `tests/test_requests.py`. It also repeatedly refers to scoping the `ssl.SSLContext` mock within that same file, so the expected file is directly supported."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions a CI failure with `TypeError: __init__() got an unexpected keyword argument 'password'` in the password-protected client certificate test. That provides the specific exception type tied to the encrypted-key `load_cert_chain` path, so the expected answer is supported."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses implementing password-protected client certificates in `requests` and how the password is passed through to `urllib3`, but it never states a minimum `urllib3` version. There is no explicit or strongly implied mention of `1.9`, so the expected answer cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the implementation \"added a NotImplementedError for insufficient OpenSSL versions.\" That directly answers the question about what happens when OpenSSL is too old for the password feature."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \u201cTo maintain Python 2.7 compatibility, I created a `get_cert_password` utility in `requests/utils.py`.\u201d That directly answers the question with the expected function name, so the detail is preserved."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions \u201caddressing PKCS12 support\u201d and evaluating branching logic based on file extensions. That is enough to identify the non-PEM format the maintainers were concerned about."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions \u201cthe successful merge of issue #1573\u201d in the context of implementing SSL client certificate password support in `requests`. It also later refers to tagging contributors who commented on issue `#1573`, reinforcing that this was the relevant GitHub issue for that feature."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the password argument was kept within the existing `cert` tuple in `requests/sessions.py`. That directly identifies the file where the interface should be exposed."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the password-case unit tests were added in `tests/test_requests.py`. That is enough to identify this file as the one used to trigger the initial password-protected key error."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a `TypeError`, but only in the context of a CI failure caused by overly broad patching of `ssl.SSLContext` in tests. It does not state that `ssl.SSLContext.load_cert_chain` originally raised `TypeError` when the private key was encrypted, so the specific factual detail is not preserved."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses implementing password support in `requests`, test fixes, documentation, and adapter tuple handling, but it never mentions `urllib3` version requirements. Since the specific minimum version `1.9` is not stated or implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `OpenSSL.crypto.Error` in the context of tests and environment-specific skips, but it does not state what error should be raised when the OpenSSL version is too old for password support. Since `NotImplementedError` is not present or clearly implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that they \"implemented a version-aware `get_cert_password` utility function in `requests/utils.py`.\" That directly matches the expected answer, so the detail is preserved clearly enough to answer the question."
+  },
+  {
+    "conversation_id": "psf-requests-1573",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history talks about password-protected client certificates, tuple handling, documentation, and SSLContext mocking, but it never mentions a specific non-PEM file extension or format. Since `PKCS12` is not stated or clearly implied, the expected answer cannot be recovered from this summary."
+  }
+]

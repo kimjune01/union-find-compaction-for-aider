@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a CI failure on Windows runners with an `EACCESS` error in `src/vs/platform/telemetry/node/telemetryService.ts`. It does not mention `Registry entry not found`, so the expected answer cannot be derived from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry initialization, cleanup, and dispose behavior in general, but it never names a file as having a missing `dispose()` call in the test lifecycle. The expected filename `test/automation/src/code.ts` does not appear or follow from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `test/integration/browser/index.ts` as one of many modified files, but it does not state any timeout value for that file or for the test suite execution. Since the specific detail \"5 seconds\" is not present or strongly implied, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions that `src/vs/base/common/async.ts` was modified, but it never names any specific utility function from that file. Since `runDelayed` is not stated or clearly implied, the detail cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry initialization, `_pendingFlush`, `_initialized`, `_checkInitialization`, and various files, but it never names the private method that was refactored to break the memory-leaking closure chain. The expected method name `onActionExecute` is not stated or implied with enough specificity."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history explicitly says the Windows runner failure was an `EACCESS` error in `src/vs/platform/telemetry/node/telemetryService.ts`. It does not mention `EPERM`, nor does it strongly imply that equivalent error code."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \"I am adding a section to `docs/telemetry.md` regarding the lifecycle management and the initialization promise patterns.\" It also later says `docs/telemetry.md` needed another update to reflect the promise-gate pattern, so the expected file is directly present."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the memory leak fix was \"verified using Sinon.js in `test/services/telemetryService.test.ts`.\" That is enough to identify the library used for checking call counts in the test suite."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history only mentions an `EACCESS` error on Windows during test suite initialization. It does not mention the specific CI output text `Registry entry not found`, so the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several files related to telemetry, actions, documentation, and tests, but it never identifies `test/automation/src/code.ts` or any file as specifically having a missing `dispose()` call in the test lifecycle. Since that exact detail is absent, the expected answer cannot be derived from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry lifecycle changes, tests, CI, and documentation, but it never mentions `test/integration/browser/index.ts` or any default timeout value. Since the specific detail \"5 seconds\" does not appear or follow from the summary, the expected answer cannot be determined."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry flushing, initialization guards, lifecycle management, and a gatekeeper promise, but it never mentions any utility function from `src/vs/base/common/async.ts`. There is no reference to `runDelayed` or an equivalent specific helper, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry lifecycle fixes, initialization guards, and some prior work in action-related files, but it never names any private method that was refactored to break a memory-leaking closure chain. Since `onActionExecute` is not stated or clearly implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history explicitly says the Windows runner failure was an `EACCESS` error in `src/vs/platform/telemetry/node/telemetryService.ts`. It does not mention `EPERM`, and `EACCESS` is a different specific error code, so the expected answer cannot be derived from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the user is \"adding a section to `docs/telemetry.md` regarding the lifecycle management and the initialization promise patterns.\" Later it also says \"`docs/telemetry.md` needs an update because the initialization flow has slightly changed again,\" which confirms the file."
+  },
+  {
+    "conversation_id": "microsoft-vscode-93814",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses telemetry lifecycle fixes, tests, and documentation, but it never names a mocking or spying library used in the test suite. There is no mention of verifying an event listener removal call count with Sinon.js or any equivalent tool."
+  }
+]

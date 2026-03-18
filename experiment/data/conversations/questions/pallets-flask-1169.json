@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "pallets-flask-1169",
+    "question": "Which file in Flask was identified as the location of the send_from_directory issue?",
+    "expected_answer": "helpers.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "pallets-flask-1169",
+    "question": "What specific exception was triggered when the path resolution failed in the initial report?",
+    "expected_answer": "SecurityError",
+    "category": "error_message",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "pallets-flask-1169",
+    "question": "Which function in helpers.py was the primary target for modification to fix the path validation?",
+    "expected_answer": "safe_join",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "pallets-flask-1169",
+    "question": "What tool was used to simulate file paths to avoid brittle tests depending on OS layouts?",
+    "expected_answer": "a mock",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "pallets-flask-1169",
+    "question": "Which Python standard library module was introduced to handle path normalization after encountering issues with os.path?",
+    "expected_answer": "pathlib",
+    "category": "library",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "pallets-flask-1169",
+    "question": "What new helper function was created in helpers.py to centralize the path security logic?",
+    "expected_answer": "_ensure_path_is_safe",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "pallets-flask-1169",
+    "question": "What issue number was assigned to the race condition reported regarding high-concurrency static file serving?",
+    "expected_answer": "#1170",
+    "category": "decision",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "pallets-flask-1169",
+    "question": "What specific error occurred during the high-concurrency stress test before the context manager fix?",
+    "expected_answer": "Too many open files",
+    "category": "error_message",
+    "region": "late"
+  }
+]

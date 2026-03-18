@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "python-cpython-57912",
+    "question": "Which function was proposed to be modified in Python/pythonrun.c to handle the PYTHONHASHSEED environment variable?",
+    "expected_answer": "Py_Initialize",
+    "category": "function_name",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "python-cpython-57912",
+    "question": "In which file is the string_hash function inspected to ensure proper salt-based hash caching?",
+    "expected_answer": "Objects/unicodeobject.c",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "python-cpython-57912",
+    "question": "Which specific error was observed in test_dict.py before the resize logic fix?",
+    "expected_answer": "RuntimeError: dictionary changed size during iteration",
+    "category": "error_message",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "python-cpython-57912",
+    "question": "To which new file was the seeding logic moved to avoid crowding Python/pythonrun.c?",
+    "expected_answer": "Python/hashseed.c",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "python-cpython-57912",
+    "question": "What is the memory size of the PyDictEntry struct on 64-bit systems?",
+    "expected_answer": "24 bytes",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "python-cpython-57912",
+    "question": "Which file was updated to include documentation on how PYTHONHASHSEED affects security?",
+    "expected_answer": "Doc/using/cmdline.rst",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "python-cpython-57912",
+    "question": "What environment variable is used to pin the seed for deterministic behavior?",
+    "expected_answer": "PYTHONHASHSEED",
+    "category": "configuration",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "python-cpython-57912",
+    "question": "Which specific C API was utilized on Windows to ensure cryptographically secure seeds?",
+    "expected_answer": "CryptGenRandom",
+    "category": "library",
+    "region": "late"
+  }
+]

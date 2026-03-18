@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the implementation was verified with regression tests in `tests/test_blueprints.py`. That provides the specific file name needed to answer the question about where the test case for issue #1361 was defined."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several Flask files and functions like `render_template`, `render_template_string`, and `has_request_context()`, but it does not mention the specific method `setup_template_loader`. Since the question asks for that exact method name, the detail is not recoverable from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses template loading changes in `flask/templating.py` and `flask/blueprints.py`, but it never names `_add_template_folder` or identifies which file defines the logic that appends template folders to the loader list. Since `flask/app.py` is not stated or strongly implied for that specific detail, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history explains that the user fixed a problem by adding a `has_request_context()` guard around template path injection, and it mentions a test failure caused by side effects. However, it never states the exact exception type that occurred before that guard clause was added."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the PR description was updated to note an `lru_cache` implementation for the template loader. In Python, `lru_cache` refers to `functools.lru_cache`, so the expected answer is strongly implied by the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that `docs/blueprints.rst` was updated to clarify `template_folder` path resolution. That directly matches the expected answer about where the note on configuration behavior was added."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the user \"resolved a linting warning in `tools/check-docs.py`.\" That directly identifies the specific tool used for documentation linting checks."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a linting warning in `tools/check-docs.py`, but it never states the actual line-length limit. Since the specific threshold is not given or strongly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several test files, including `tests/test_blueprints.py`, `tests/test_templating.py`, and `tests/test_templates.py`. It does not specifically state that the user was instructed to define the reproduction test for issue `#1361` in `tests/test_blueprints.py`, so the expected answer is not recoverable with confidence."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history says to investigate `flask/app.py`, but it does not name the specific Flask method involved in injecting paths into `jinja_loader`. Since `setup_template_loader` is not stated or clearly implied, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `flask/app.py` as a file to investigate for performance concerns, but it does not state that `_add_template_folder` lives there or that this file appends template folders to the loader list. Since that specific detail is not explicitly contained or strongly implied, the expected answer cannot be recovered reliably."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history describes the custom loader work, the regression fix using `has_request_context()`, and later caching changes, but it never states what exception the user originally saw. Since `AttributeError` is not mentioned or clearly implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that, after investigating the performance concern, the user considered and then implemented memoization using `functools.lru_cache` in `flask/templating.py`. That directly matches the expected answer about the internal cache for the blueprint template loader."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention documenting the cache assumption, but it only says \u201cadd a note in the docs or a comment in `flask/blueprints.py`.\u201d It does not specify `docs/blueprints.rst`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions work on `docs/changes.rst`, tests, caching, and PR updates, but it never identifies any documentation linting command or script. The specific tool `tools/check-docs.py` cannot be determined from the provided summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1361",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions documentation updates in `docs/changes.rst`, but it does not state any documentation linting rule or a specific line-length threshold. Since `80 characters` is not present or clearly implied, the expected answer cannot be recovered from this summary."
+  }
+]

@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention `tabsTitleControl.ts` as one of the modified files, but it never states that this file is the one responsible for rendering tab headers. Since the question asks for that specific responsibility, the expected answer is not directly supported by the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several CSS-related changes, but it does not mention `editorPart.css` or any required property adjustment for accommodating a new tab row. Since `flex-basis` is not stated or strongly implied, the detail cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several files and services involved in tab tearing, window management, and editor behavior, but it does not name any service responsible for the lifecycle of editor groups. Since `EditorGroupService` is not stated or clearly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `serializable.ts` and some IPC/schema work, but it never states which interface is recommended for serializing editor inputs. The specific detail `IEditorInputSerializer` is not present or strongly implied."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on tab tearing, IPC, window lifecycle, tests, and follow-up stabilization work. It does not mention a custom list renderer or specify any method name for handling tab context menus, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses tab tearing, cross-window dragging, IPC, focus handling, tests, and follow-up stabilization, but it never mentions `commands.ts` or a keyboard-only command name for ripping tabs. The expected phrase \"Move Tab to New Window\" is not stated or strongly implied."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that tab-tearing logic was refactored into `TabManagerService` and that it injects `IWindowService` along with `IInstantiationService`. That directly supports the expected answer about handling cross-process window detachment."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a leak in `TabGroupController.ts` and recommends using `this._register(...)` with the `Disposable` pattern. It does not mention `DisposableStore`, nor does it clearly imply that specific utility class."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `tabsTitleControl.ts` among the VS Code workbench files involved in the tab-tearing work. Given the filename and surrounding editor/workbench context, it strongly implies this is the file responsible for tab header rendering, matching the expected path."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `editorPart.css` among many touched files, but it never states what specific CSS property was changed there. There is no direct or implied reference to `flex-basis`, so the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history lists many files and services involved in tab tearing, memory leaks, accessibility, and window management, but it never states which service manages the lifecycle of editor groups. Since `EditorGroupService` is not mentioned or clearly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on tab tearing, memory leaks, accessibility, tests, and follow-up stabilization work. It does not mention editor input serialization or identify any interface used for cross-window communication, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions many files, services, tests, and fixes, but it does not mention a custom list renderer method for handling tab context menus. The specific method name `onContextMenu` is not present or implied strongly enough to recover it from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions that `commands.ts` was one of many files touched, but it never states what command name was added for a keyboard-only tab tear-out action. There is no explicit or strongly implied reference to `Move Tab to New Window`."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions an `'IWindowService' IPC delay` in connection with the new tab-tearing logic. That is the only service named that fits handling cross-process window coordination, so it strongly supports the expected answer."
+  },
+  {
+    "conversation_id": "microsoft-vscode-224",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the fix in `TabController.ts` was implemented \"using `DisposableStore`\" to ensure listeners are cleaned up. That directly answers the question about which utility class should manage listener disposal to prevent memory leaks."
+  }
+]

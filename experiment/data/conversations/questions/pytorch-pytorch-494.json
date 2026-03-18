@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "In which file did the assistant recommend abstracting platform-specific code to avoid polluting the core logic?",
+    "expected_answer": "c10/util/WindowsCompat.h",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "What tool did the assistant suggest for debugging which DLLs are missing when a 'DLL load failed' error occurs?",
+    "expected_answer": "Dependencies.exe",
+    "category": "test_case",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "Which CMake module should be updated to handle different library naming conventions like 'cudnn64_7.lib' on Windows?",
+    "expected_answer": "FindCUDNN.cmake",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "What preprocessor flag must be added to CMakeLists.txt to prevent conflicts with 'min' and 'max' macros in public headers?",
+    "expected_answer": "NOMINMAX",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "What is the recommended alternative to the 'fork' start method for multiprocessing on Windows?",
+    "expected_answer": "spawn",
+    "category": "decision",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "Which Python function should be updated in 'torch/__init__.py' to ensure DLLs in the 'lib' subfolder are located correctly?",
+    "expected_answer": "os.add_dll_directory",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "Which MSVC compiler flag was identified as necessary for build-wide binary compatibility with the core library?",
+    "expected_answer": "/MD",
+    "category": "configuration",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "pytorch-pytorch-494",
+    "question": "What helper file was created to manage CUDAToolkit paths in a more modular fashion for the Windows build?",
+    "expected_answer": "cmake/Modules/FindCUDA_Windows.cmake",
+    "category": "filename",
+    "region": "late"
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "psf-requests-2966",
+    "question": "Which file was initially suggested to be modified to probe for certitude?",
+    "expected_answer": "requests/sessions.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "psf-requests-2966",
+    "question": "What is the name of the helper function defined in requests/utils.py to import certitude?",
+    "expected_answer": "get_system_ca_bundle()",
+    "category": "function_name",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "psf-requests-2966",
+    "question": "Which configuration flag was suggested for the Session object to allow power users to toggle system store usage?",
+    "expected_answer": "verify_system_store",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "psf-requests-2966",
+    "question": "Which Python standard library module was suggested to be used to load system defaults instead of relying on certitude?",
+    "expected_answer": "ssl",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "psf-requests-2966",
+    "question": "What environment variable was introduced to allow users to override the system trust store cache?",
+    "expected_answer": "REQUESTS_CA_BUNDLE",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "psf-requests-2966",
+    "question": "Which exception is raised when the provided path for a certificate is invalid in the adapter?",
+    "expected_answer": "requests.exceptions.SSLError",
+    "category": "error_message",
+    "region": "mid"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "psf-requests-2966",
+    "question": "What tool was used to verify compatibility across all supported Python versions during the final testing phase?",
+    "expected_answer": "tox",
+    "category": "test_case",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "psf-requests-2966",
+    "question": "Which Python decorator was implemented in requests/utils.py to improve performance by caching the trust store path resolution?",
+    "expected_answer": "lru_cache",
+    "category": "function_name",
+    "region": "late"
+  }
+]

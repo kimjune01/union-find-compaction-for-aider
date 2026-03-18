@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history describes the files, middleware changes, tests, and later WebSocket origin handling, but it never states what value was originally placed in `allow_origins`. Since `['*']` is not mentioned or clearly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions changes to `CORSMiddleware.dispatch` and updates to `starlette/middleware/cors.py`, but it never states that a print statement was added there for troubleshooting. Since that specific debugging action is not described, the expected answer is not directly supported by the summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention a `403` status code, but only in the context of a WebSocket origin-validation unit test. It does not state that a GET request after a successful preflight was returning `403 Forbidden`, so the expected answer is not recoverable from this summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `security.py` as one of several files involved in earlier CORS troubleshooting, but it does not state that this file contained the dependency logic checking the `Referer` header or that it caused the 403 errors. Since that specific detail is missing, the expected answer is not supported by the summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `JSONResponse` as one of the key components involved in the earlier CORS/header troubleshooting. That is specific enough to identify the custom response class tied to the header issue."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses CORS, middleware ordering, WebSocket origin checks, and later refactors, but it never mentions an `OPTIONS` authentication bypass issue or the specific attribute error that resulted. Because the exact error message is not stated or strongly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `ProxyHeadersMiddleware` in the context of the CORS-related fix work. While it does not restate the exact placement rule verbatim, it contains the specific middleware name needed to answer the question."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions \u201cGitHub issue #1663\u201d when describing updates to `fastapi/middleware/cors.py`. It also later says to link the original \u201cIssue #1663\u201d in the PR and mentions adding a comment to `#1663`, so the expected answer is directly supported."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses middleware ordering, WebSocket origin validation, and pytest configuration, but it never states what value was originally placed in the `allow_origins` list. Because `['*']` is not mentioned or clearly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history does not explicitly mention a print statement, but it does tie changes to `CORSMiddleware.dispatch` directly to `starlette/middleware/cors.py`. That makes the expected file strongly implied from the available context."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `403` in the context of WebSocket origin validation and a utility test, but it does not state that a `GET` request received that code after a successful preflight. Because that specific request/response detail is not explicitly preserved, the expected answer cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses CORS, WebSocket origin validation, middleware changes, and tests, but it never mentions a dependency function checking the `Referer` header or identifies the file containing that logic. Since `security.py` does not appear or follow directly from the summary, the expected answer cannot be determined."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses CORS middleware ordering, WebSocket origin validation, and a `NoneType.headers` error, but it never identifies the specific response class the user was returning from routes. There is no mention of `JSONResponse` or any equivalent detail."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions an `AttributeError`, but it is specifically `'NoneType' object has no attribute 'headers'` in `CORSMiddleware.dispatch`. It does not mention an error about authentication on `OPTIONS` requests or the `'user'` attribute."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention `ProxyHeadersMiddleware`, but only says it was configured for production. It does not state that it should be placed before `CORSMiddleware`, so the required ordering detail is missing."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions \u201cFollowing the closure of issue #1663\u201d and later says to \u201clink the original Issue #1663\u201d and that the user added a comment to \u201c#1663.\u201d That directly identifies the GitHub issue referenced for tracking the CORS work."
+  }
+]

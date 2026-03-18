@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several changes in [requests/sessions.py] conceptually, including moving trust store resolution and checking fallback behavior there. But it never specifically states that this was the file \"initially suggested to be modified to probe for certitude,\" so the expected answer is not directly recoverable from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly names `get_system_ca_bundle` in `requests/utils.py` when describing the regression fix. That is sufficient to identify the helper function the question asks about, even if the phrase \"to import certitude\" is not repeated verbatim."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses system trust store integration, environment variables, fallback behavior, and performance changes, but it never mentions a specific `Session` configuration flag for toggling system store usage. The expected flag name cannot be recovered from the provided summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses `certitude`, fallback behavior, caching, locking, tests, and release details, but it never mentions a suggestion to use any specific Python standard library module to load system defaults. Since `ssl` is not stated or strongly implied, the expected answer cannot be determined from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions adding a test to verify cache invalidation when environment variables like `REQUESTS_CA_BUNDLE` are modified. That directly identifies the environment variable relevant to overriding the cached trust store resolution."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses trust store fallback behavior, caching, locking, tests, and release details, but it does not state which specific exception the adapter raises for an invalid certificate path. There is no explicit mention of `requests.exceptions.SSLError` or an equivalent description tied to that condition."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions final linting, running the full test suite, and CI passing across target platforms, but it never specifies the tool used to verify compatibility across supported Python versions. `tox` is not mentioned or strongly implied."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the path resolution logic in `requests/adapters.py` and `requests/utils.py` was optimized by implementing `functools.lru_cache`. It also later references that the resolution is idempotent due to the `lru_cache`, which directly matches the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly centers the certitude initialization and locking discussion around `requests/sessions.py`. It states the user wanted to inspect that file and later confirms the refactor was completed there, which strongly supports the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history says there was an internal resolver in `requests/utils.py` and mentions caching around system trust store resolution, but it never names the helper function. Since `get_system_ca_bundle()` is not stated or strongly implied, the detail cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses system trust store integration, session locking, fallback behavior, tests, and docs, but it never mentions a proposed Session configuration flag by name. Since `verify_system_store` does not appear or get clearly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the implementation avoided certitude by using the Python standard library\u2019s `ssl.create_default_context()` and `load_default_certs()`. That directly identifies the module as `ssl`."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions adding support for the `REQUESTS_CA_BUNDLE` environment variable. It also references a test that verifies cache invalidation when `REQUESTS_CA_BUNDLE` is toggled mid-process, which directly matches the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses trust store fallback behavior, warnings, and performance/locking changes, but it never states what specific exception the adapter raises for an invalid certificate path. The expected detail, `requests.exceptions.SSLError`, is not present or strongly implied."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions final linting, platform-specific tests, and that the test suite passed, but it never names the tool used to run compatibility checks across supported Python versions. Since `tox` is not stated or strongly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-2966",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that result caching was implemented in the internal resolver in `requests/utils.py` using `functools.lru_cache`. It also later notes that `lru_cache` is thread-safe in Python 3, reinforcing that this was the decorator used for trust store path resolution caching."
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "pallets-flask-1421",
+    "question": "In which file is the Request class implementation for JSON handling located?",
+    "expected_answer": "flask/wrappers.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "pallets-flask-1421",
+    "question": "What is the name of the hidden attribute suggested to ensure developers are only warned once per request?",
+    "expected_answer": "_warned_json_access",
+    "category": "function_name",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "pallets-flask-1421",
+    "question": "Which test file was identified as triggering errors due to 'warnings.simplefilter('error')'?",
+    "expected_answer": "tests/test_helpers.py",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "pallets-flask-1421",
+    "question": "What configuration flag in the get_json() method can be used to override the missing content-type header requirement?",
+    "expected_answer": "force=True",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "pallets-flask-1421",
+    "question": "Which specific Python tool was used to run benchmarks to ensure no performance regressions were introduced?",
+    "expected_answer": "pytest-benchmark",
+    "category": "test_case",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "pallets-flask-1421",
+    "question": "What is the new commit message format suggested for the deprecation of request.json?",
+    "expected_answer": "Deprecate request.json in favor of request.get_json()",
+    "category": "decision",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "pallets-flask-1421",
+    "question": "Which file was updated to include the deprecation note for the 1.x to 2.0 transition?",
+    "expected_answer": "docs/api.rst",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "pallets-flask-1421",
+    "question": "What standard library method is used to ensure the deprecation warning points to the user's code and not the framework internals?",
+    "expected_answer": "stacklevel=2",
+    "category": "library",
+    "region": "late"
+  }
+]

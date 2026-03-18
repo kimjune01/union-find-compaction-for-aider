@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "What specific error message was reported in the CI output at the start of the investigation?",
+    "expected_answer": "Registry entry not found",
+    "category": "error_message",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "Which filename was identified as having a missing dispose() call in the test lifecycle?",
+    "expected_answer": "test/automation/src/code.ts",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "What was the default timeout value mentioned for the test suite execution in test/integration/browser/index.ts?",
+    "expected_answer": "5 seconds",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "What utility function from src/vs/base/common/async.ts was suggested to handle background cleanup?",
+    "expected_answer": "runDelayed",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "What was the name of the private method refactored to break the memory-leaking closure chain?",
+    "expected_answer": "onActionExecute",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "Which specific error was encountered during the clean build step on the Windows runner?",
+    "expected_answer": "EPERM",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "What file did the maintainer ask to be updated regarding the new initialization promise patterns?",
+    "expected_answer": "docs/telemetry.md",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "microsoft-vscode-93814",
+    "question": "Which library was used in the test suite to verify the event listener removal call count?",
+    "expected_answer": "Sinon.js",
+    "category": "library",
+    "region": "late"
+  }
+]

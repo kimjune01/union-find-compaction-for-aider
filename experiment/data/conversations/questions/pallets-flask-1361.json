@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "pallets-flask-1361",
+    "question": "What is the name of the file where the user was instructed to define a test case to reproduce issue #1361?",
+    "expected_answer": "tests/test_blueprints.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "pallets-flask-1361",
+    "question": "Which Flask method did the assistant suggest inspecting to understand how paths are injected into the jinja_loader?",
+    "expected_answer": "setup_template_loader",
+    "category": "function_name",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "pallets-flask-1361",
+    "question": "Which Flask file contains the logic that appends template folders to the loader list via _add_template_folder?",
+    "expected_answer": "flask/app.py",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "pallets-flask-1361",
+    "question": "What specific exception was the user experiencing before implementing the guard clause in the custom loader?",
+    "expected_answer": "AttributeError",
+    "category": "error_message",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "pallets-flask-1361",
+    "question": "What library did the user use to implement an internal cache for the blueprint template loader?",
+    "expected_answer": "functools.lru_cache",
+    "category": "library",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "pallets-flask-1361",
+    "question": "Which file was updated to include a note about the template_folder configuration behavior?",
+    "expected_answer": "docs/blueprints.rst",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "pallets-flask-1361",
+    "question": "What specific tool was used by the user to perform linting checks on the documentation files?",
+    "expected_answer": "tools/check-docs.py",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "pallets-flask-1361",
+    "question": "What was the specific threshold for line length enforced by the documentation linting script?",
+    "expected_answer": "80 characters",
+    "category": "configuration",
+    "region": "late"
+  }
+]

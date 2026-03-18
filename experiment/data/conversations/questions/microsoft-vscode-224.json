@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "Which file handles the rendering of tab headers in the vscode workbench?",
+    "expected_answer": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What CSS property must be adjusted in editorPart.css to accommodate the new tab row?",
+    "expected_answer": "flex-basis",
+    "category": "configuration",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "Which service manages the lifecycle of editor groups?",
+    "expected_answer": "EditorGroupService",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What is the recommended interface for serializing editor inputs for cross-window communication?",
+    "expected_answer": "IEditorInputSerializer",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What method should be overridden in the custom list renderer to handle context menus for tabs?",
+    "expected_answer": "onContextMenu",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What command should be implemented in commands.ts to provide a keyboard-only alternative for ripping tabs?",
+    "expected_answer": "Move Tab to New Window",
+    "category": "test_case",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What service should be injected into TabManagerService to handle cross-process window detachment?",
+    "expected_answer": "IWindowService",
+    "category": "library",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "microsoft-vscode-224",
+    "question": "What utility class should be used to manage listener disposal in TabController.ts to prevent memory leaks?",
+    "expected_answer": "DisposableStore",
+    "category": "function_name",
+    "region": "late"
+  }
+]

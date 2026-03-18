@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history never quotes the full traceback, but it explicitly identifies the problematic marker as `platform_system` and says the installation failure was a `NameError`. Combining those two details strongly implies the original error was that `platform_system` was not defined."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly discusses re-checking dependencies in `setup.py`, and the assistant specifically refers to reviewing the `extras_require` block. Since `extras_require` is a section within `setup.py`, the history contains enough information to infer that this is the file the user checked."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions testing with `pip 7.1.2` and refers generally to `pip 6.x` and `8.x`, but it never specifies `6.1.1`. Since the expected answer requires that exact version, the detail is not recoverable from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says `CHANGELOG.md` was updated earlier for Issue `#4006`, which matches adding a note about the fix. Although it also mentions later documentation updates in `docs/installation.rst` and `README`, the expected file is still directly supported by the summary."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `tox.ini`, which is the configuration file for `tox`. In the context of verifying stability across Python 2.7 and 3.5, that strongly indicates `tox` was the test runner used."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `README` updates about legacy pip compatibility and specific testing with `pip 7.1.2`, but it never states a baseline minimum pip version in the README. The expected value `8.1.2` is not present or strongly implied."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions work in `requests/adapters.py`, but it does not name issue `#4012` or identify any specific class method where those test failures occurred. The expected detail, `HTTPAdapter.get_connection`, is not present or strongly implied."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that a race condition in `requests/adapters.py` was addressed using `threading.Lock`. That directly matches the expected synchronization primitive, so the detail is preserved strongly enough to answer the question."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states the initial issue #4006 was a `NameError: name 'platform_system' is not defined in _markerlib`. That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly centers the dependency and marker changes around `setup.py`, and the assistant specifically tells the user to review the `extras_require` block there. Since the user then says they checked it, the file they checked is strongly implied to be `setup.py`."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions `pip 6.1.1` as the version where removing the markers resolved the `NameError`. Even though that detail is stated by the user rather than clearly framed as the assistant\u2019s suggestion, the specific expected version is present in the summary."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history explicitly says the user added a note in `README`, not `CHANGELOG.md`. There is no mention of `CHANGELOG.md`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions \"relying on `tox.ini` for distribution integrity.\" That strongly implies `tox` was the tool used to validate behavior across multiple Python versions, which matches the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the earlier setup.py refactor involved \"setting pip 8.1.2 as the baseline.\" That directly provides the expected version, even if the question phrases it as a README baseline requirement."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the thread-safety fix for issue `#4012` involved adding a lock in `HTTPAdapter.__init__` and using it in `get_connection`. That strongly identifies the affected class method as `HTTPAdapter.get_connection`."
+  },
+  {
+    "conversation_id": "psf-requests-4006",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that thread safety in `requests/adapters.py` was implemented by adding `self._pool_lock = threading.Lock()` in `HTTPAdapter.__init__`. That directly identifies the synchronization primitive used for pool management."
+  }
+]

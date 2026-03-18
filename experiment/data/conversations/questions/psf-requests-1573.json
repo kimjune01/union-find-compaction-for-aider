@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "psf-requests-1573",
+    "question": "Which GitHub issue relates to the inability to provide a password for SSL client certificates?",
+    "expected_answer": "#1573",
+    "category": "decision",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "psf-requests-1573",
+    "question": "In which file should the interface for SSL client certificate passwords be exposed?",
+    "expected_answer": "requests/sessions.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "psf-requests-1573",
+    "question": "Which test file was used to trigger the initial password-protected key error?",
+    "expected_answer": "tests/test_requests.py",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "psf-requests-1573",
+    "question": "What exception was initially raised during ssl.SSLContext.load_cert_chain when the key was encrypted?",
+    "expected_answer": "TypeError",
+    "category": "error_message",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "psf-requests-1573",
+    "question": "What is the minimum version of urllib3 required to support the password argument?",
+    "expected_answer": "1.9",
+    "category": "configuration",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "psf-requests-1573",
+    "question": "What error is raised if the OpenSSL version is too old to support the new password feature?",
+    "expected_answer": "NotImplementedError",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "psf-requests-1573",
+    "question": "Which utility function was created in requests/utils.py to encapsulate version-specific logic?",
+    "expected_answer": "get_cert_password",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "psf-requests-1573",
+    "question": "What specific file extension mentioned by maintainers required different handling compared to PEM files?",
+    "expected_answer": "PKCS12",
+    "category": "decision",
+    "region": "late"
+  }
+]

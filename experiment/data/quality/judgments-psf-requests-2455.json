@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly names the file where the SSL-related failures occurred multiple times, including the PyPy failure and the later Windows 2.7.9 import error. That filename matches the expected answer exactly, so the detail is retained clearly enough to answer the question."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions the \u201cimmediate `CERTIFICATE_VERIFY_FAILED` bug\u201d near the end. That directly matches the expected error message observed on previously working endpoints."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions both the \"certifi bundle\" and `certifi.where()` being used to set `self.ca_certs`. That directly identifies the library requests uses for the standard CA certificate path."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention a regression test file, but it names `requests/tests/test_adapters.py`, not `tests/test_ssl.py`. Since the expected file is not stated or implied, the detail cannot be recovered correctly from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the changes \"passed flake8 checks.\" That directly identifies the linter tool used for code violations."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history states the exact PyPy CI error: the user reports seeing `\"AttributeError: module ssl has no attribute HAS_SNI\"` in the logs. That directly matches the expected answer, so the detail is explicitly preserved."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions regression tests in `requests/tests/test_adapters.py` using `pytest-mock`, but it does not state that `unittest.mock` was used to verify SSL context creation parameters. Since the specific expected detail is not present or strongly implied, the compressed history is insufficient."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions documentation-related changes only in `requests/adapters.py` docstrings and PR/discussion notes. It does not mention any update to `docs/user/advanced.rst`, so the expected file cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the CI failure and the `AttributeError` occurred in `requests/packages/urllib3/util/ssl_.py`. It also repeats that same file later for the Windows 2.7.9 import issue, so the expected filename is directly recoverable."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the user fixed \u201cthe immediate `CERTIFICATE_VERIFY_FAILED` bug.\u201d That directly matches the expected error message described in the question, so the detail is retained clearly enough to answer correctly."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions a proxy regression being addressed using `certifi.where()`. That strongly indicates the library used by `requests` to supply the standard CA certificate path is `certifi`."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history names several test files, specifically `requests/tests/test_adapters.py` and `test_requests.py`, and even says the regression test was added to `test_requests.py`. It never mentions `tests/test_ssl.py`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions tests, CI, tox, and specific SSL-related fixes, but it does not mention any linter being run. Since `flake8` is not stated or clearly implied, the expected answer cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states the PyPy CI failure message: `AttributeError: module ssl has no attribute HAS_SNI`. That exactly matches the expected answer, so the detail is clearly retained."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that a regression test in `test_requests.py` was added \"using `unittest.mock` to patch `ssl_wrap_socket`.\" That provides the specific testing mechanism referenced for checking SSL-related behavior, so it supports the expected answer."
+  },
+  {
+    "conversation_id": "psf-requests-2455",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions documentation changes only in `requests/adapters.py` docstrings. It does not mention any update to `docs/user/advanced.rst` or any user-facing docs file about session-level verification behavior."
+  }
+]

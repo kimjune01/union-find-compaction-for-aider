@@ -1,0 +1,808 @@
+{
+  "id": "tiangolo-fastapi-1663",
+  "repo": "tiangolo/fastapi",
+  "issue_number": 1663,
+  "title": "CORSMiddleware not work",
+  "messages": [
+    {
+      "role": "user",
+      "content": "I am facing an issue with CORSMiddleware in FastAPI. I've followed the docs, but my preflight requests are failing with a CORS policy error despite setting allow_origins to ['*']. Could there be an issue with how the middleware is registered in main.py?"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. That is frustrating. Based on your snippet in main.py, the setup looks standard. Could you verify if there is an intermediary, like Nginx or an API Gateway, that might be stripping the Access-Control headers before they reach the client? Also, check if your route definition for /api is accidentally raising an exception before the middleware can process the response."
+    },
+    {
+      "role": "user",
+      "content": "I checked the logs for main.py, and there are no unhandled exceptions. I am running locally without any proxy. However, I notice my OPTIONS requests return a 404. Could the middleware be failing to catch the preflight request before it hits the routing layer?"
+    },
+    {
+      "role": "assistant",
+      "content": "A 404 on OPTIONS suggests the request isn't being intercepted correctly. Please verify the order of middlewares in your application. If you have any custom Starlette BaseHTTPMiddleware, it might be interfering. Try moving the CORSMiddleware registration to be the very first line after app = FastAPI() in main.py."
+    },
+    {
+      "role": "user",
+      "content": "I moved CORSMiddleware to the top of main.py, but it didn't change the 404. I checked the Starlette source code for CORSMiddleware and it seems it should handle the OPTIONS request. Is it possible that the 'allow_methods' argument is not being respected?"
+    },
+    {
+      "role": "assistant",
+      "content": "That is an interesting observation. Let us inspect the headers being sent by your browser's network tab. Specifically, look at the 'Access-Control-Request-Method'. If that is a custom method, you might need to explicitly list it or verify if 'allow_methods' includes it. Can you confirm if you are using any path parameters in your /api route?"
+    },
+    {
+      "role": "user",
+      "content": "I am using path parameters, but the preflight is failing even for a simple /health check route. I added a print statement in the middleware's dispatch method in starlette/middleware/cors.py and it seems it never reaches that point. Could this be a protocol issue?"
+    },
+    {
+      "role": "assistant",
+      "content": "If the code in the middleware isn't executing, the request might be blocked by the underlying server, Uvicorn, before it reaches the ASGI stack. Are you using a specific host flag like --host 0.0.0.0? Try running the server with --reload to ensure no old cached versions of main.py are being executed."
+    },
+    {
+      "role": "user",
+      "content": "I am using uvicorn main:app --reload. I just updated Uvicorn to the latest version and the issue persists. Could this be related to how I am mounting sub-applications? I have an app.mount('/api', sub_app) structure in main.py."
+    },
+    {
+      "role": "assistant",
+      "content": "Aha! That is likely the culprit. When you use app.mount, the middleware on the main app does not automatically apply to the sub-app. You need to add the CORSMiddleware to the sub_app instance directly, or move the mount logic to ensure the middleware wraps the entire stack."
+    },
+    {
+      "role": "user",
+      "content": "Adding the middleware to the sub-app fixed the 404 error! However, now I get a 403 Forbidden on the actual request. The preflight passed, but the final GET request seems blocked. Is there a mismatch in the allow_origins configuration?"
+    },
+    {
+      "role": "assistant",
+      "content": "Great progress! If the preflight succeeds, the CORS headers are present. A 403 error often implies an authentication dependency is failing. Check your dependencies in the sub-app routes. Do you have a Security dependency that checks the 'Origin' header or similar values?"
+    },
+    {
+      "role": "user",
+      "content": "You are right. I had a dependency checking the 'Referer' header which didn't match the new domain. I updated the dependency logic in security.py. Now the response code is 200, but the browser is still complaining about missing CORS headers."
+    },
+    {
+      "role": "assistant",
+      "content": "This might be because the 200 response is coming from the internal logic, but perhaps another middleware is clearing the headers. Check if you have any custom response headers being set manually inside your route functions that might overwrite the Starlette CORS ones."
+    },
+    {
+      "role": "user",
+      "content": "I am not setting any manual headers. Wait, I see that I have a custom Response class being used in my routes. Could this class be stripping headers? I am returning 'JSONResponse' from fastapi.responses."
+    },
+    {
+      "role": "assistant",
+      "content": "The 'JSONResponse' class usually preserves headers, but check if you are instantiating it with a 'headers' dict that is accidentally empty. Try returning a simple dictionary instead of an explicit response object to see if the default FastAPI response handler works better."
+    },
+    {
+      "role": "user",
+      "content": "Returning a simple dictionary fixed the header issue! The API is finally working. It seems the custom JSONResponse instantiation was indeed the issue. I'll need to refactor my responses. Thank you for your help debugging the flow!"
+    },
+    {
+      "role": "assistant",
+      "content": "I am glad we found the source of the trouble. When using custom response classes, always ensure you either merge or pass the existing headers through, or rely on the FastAPI middleware to inject them into the response object naturally."
+    },
+    {
+      "role": "user",
+      "content": "One last question: Is it considered best practice to have multiple CORSMiddleware instances if I have nested applications, or should I just have one at the root?"
+    },
+    {
+      "role": "assistant",
+      "content": "Ideally, you should define it only at the root if possible. However, if your sub-apps need different CORS policies, distinct middleware registrations are necessary. Keep it simple and centralize if your policy requirements are the same for the whole API surface."
+    },
+    {
+      "role": "user",
+      "content": "That makes sense. If I centralize at the root, will sub-apps automatically inherit the middleware without needing to explicitly call add_middleware in each one? I want to ensure my /api/v1 and /api/v2 routes follow the same policy."
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, when you mount a sub-app using app.mount('/api', sub_app), the root app's middleware stack executes first. The CORS middleware will process the incoming request before it reaches the sub-app logic, so you don't need redundant registrations."
+    },
+    {
+      "role": "user",
+      "content": "Perfect. Now, regarding production deployment: I'm seeing performance overhead with the middleware check on every request. Is there a way to cache the preflight OPTIONS responses to avoid hitting the application layer every time?"
+    },
+    {
+      "role": "assistant",
+      "content": "The CORSMiddleware in Starlette is designed to be lightweight, but it does execute for every request. If you need aggressive caching, it is actually better to handle preflight at the Nginx or Load Balancer level before the request even hits your FastAPI Uvicorn process."
+    },
+    {
+      "role": "user",
+      "content": "That sounds like a much better architectural approach. I'll configure Nginx to return a 204 No Content for OPTIONS requests with the required CORS headers. Should I keep the CORSMiddleware in the code as a fallback?"
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, definitely keep it as a fallback. Browsers are strict about security. If your Nginx config misses an edge case or if a developer changes an endpoint, having the middleware ensures you don't break functionality during development or local testing."
+    },
+    {
+      "role": "user",
+      "content": "Good point. I've noticed that 'allow_methods' includes 'DELETE' and 'PATCH'. Is it dangerous to leave those open if I don't actually use them in my API? Should I tighten this whitelist?"
+    },
+    {
+      "role": "assistant",
+      "content": "Principle of least privilege applies here. If your API doesn't support DELETE or PATCH, remove them from the 'allow_methods' list in your middleware configuration. This reduces your attack surface for any potential cross-site scripting scenarios."
+    },
+    {
+      "role": "user",
+      "content": "Updated that in main.py. Also, I am seeing some weird behavior with 'allow_credentials=True' and wildcard 'allow_origins'. My browser console is warning me that credentials cannot be used with a wildcard origin."
+    },
+    {
+      "role": "assistant",
+      "content": "Ah, that is a core browser security requirement. You cannot set 'allow_origins=['*']' if 'allow_credentials' is True. You must specify the exact domain, like 'allow_origins=['https://www.example.com']', for credentials to work."
+    },
+    {
+      "role": "user",
+      "content": "I see. I was trying to make it easy for local development by using a wildcard. Can I use an environment variable to toggle this based on whether I am in dev or prod?"
+    },
+    {
+      "role": "assistant",
+      "content": "That is standard practice. You can use os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',') to populate the list. Just ensure you never load the wildcard string in your production environment settings."
+    },
+    {
+      "role": "user",
+      "content": "That's cleaner. I'll refactor my config loader in config.py to handle this. Speaking of config, what happens if I accidentally leave the trailing slash off the origin? Does that count as a mismatch?"
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, CORS matching is strict on the origin string. The browser expects the exact protocol, host, and port. Always include the full URL including the protocol, but omit the trailing slash, as that is usually canonicalized by the browser's origin implementation."
+    },
+    {
+      "role": "user",
+      "content": "Great, I'll sanitize my origins list to ensure there's no trailing slash. Do you think I need to worry about 'allow_headers' being wildcarded, or should I be more specific there as well?"
+    },
+    {
+      "role": "assistant",
+      "content": "It is safer to specify the standard set of headers like ['Content-Type', 'Authorization', 'X-Requested-With'] rather than using '*'. Limiting headers prevents some specific CSRF-style bypass attempts that rely on custom header injection."
+    },
+    {
+      "role": "user",
+      "content": "Understood. I will update the middleware instantiation. Is there anything else I should verify before closing the GitHub issue?"
+    },
+    {
+      "role": "assistant",
+      "content": "Check your logging. Ensure that when a CORS check fails, it's not silently swallowing errors in your middleware. You might want to temporarily enable debug=True in your local Uvicorn process to verify the request flow."
+    },
+    {
+      "role": "user",
+      "content": "Everything seems to be logging correctly now. I've verified the flow with a CURL request as well as the browser. I think I have enough information to document the solution."
+    },
+    {
+      "role": "assistant",
+      "content": "That sounds like a solid plan. Documenting the interaction between JSONResponse and CORSMiddleware will definitely help others facing the same issue in the repository. Good luck with the deployment!"
+    },
+    {
+      "role": "user",
+      "content": "I noticed while writing the docs that the order of middleware registration matters significantly in FastAPI. If I have custom authentication logic in a separate BaseHTTPMiddleware, does it run before or after CORSMiddleware? I am worried about the OPTIONS preflight request triggering auth checks."
+    },
+    {
+      "role": "assistant",
+      "content": "You are absolutely right to be concerned. Middleware is executed in the reverse order of how it is added. If you add your custom Auth middleware first, it will run before CORSMiddleware. For OPTIONS requests, the CORSMiddleware should intercept and return the response early to satisfy the preflight check. Ensure you register CORSMiddleware as the very first item in the stack to avoid auth logic blocking your preflight."
+    },
+    {
+      "role": "user",
+      "content": "Okay, so I should call app.add_middleware(CORSMiddleware, ...) immediately after instantiating FastAPI. I'll check my main.py file to ensure the initialization order is strictly followed. Should I explicitly handle the OPTIONS request in my routes as a fallback if the middleware fails?"
+    },
+    {
+      "role": "assistant",
+      "content": "Ideally, no. If CORSMiddleware is configured correctly, it handles the OPTIONS request internally. Adding manual route handlers for OPTIONS often leads to conflicts and header duplication. Stick to the middleware approach and test with a tool like Postman to verify that the 'Access-Control-Allow-Origin' headers appear in the response headers for the OPTIONS verb."
+    },
+    {
+      "role": "user",
+      "content": "Tested this with Postman by firing an OPTIONS request against the /api endpoint. The response headers contain the correct Origin, but I noticed 'Access-Control-Allow-Methods' is only returning 'GET, POST'. I expected all methods I defined in my configuration. Why would it be truncated?"
+    },
+    {
+      "role": "assistant",
+      "content": "The CORSMiddleware in Starlette/FastAPI often dynamically constructs the 'Access-Control-Allow-Methods' header based on the allowed methods configuration. Check if your middleware declaration in main.py has the allow_methods parameter set to ['*'] or a specific list. If you provided a list, ensure those strings are uppercase."
+    },
+    {
+      "role": "user",
+      "content": "Ah, I see. My configuration was passing ['GET', 'POST'] instead of including 'PUT' and 'DELETE'. I updated this in settings.py. Should I be concerned about 'allow_credentials' if I'm not using cookies or Authorization headers for my current implementation?"
+    },
+    {
+      "role": "assistant",
+      "content": "If you are not using credentials, it is actually safer to set allow_credentials=False. When allow_credentials is True, you cannot use the wildcard '*' for allow_origins in many modern browsers, as the specification requires an explicit origin. Setting it to False is a stricter security posture."
+    },
+    {
+      "role": "user",
+      "content": "That makes sense. I have updated the configuration to set allow_credentials=False since we use a Bearer token in the header which is passed manually via fetch(), not via cookies. Is there any performance penalty for having this middleware check every single request?"
+    },
+    {
+      "role": "assistant",
+      "content": "The performance overhead is negligible, as it is just string matching against your provided list. FastAPI's implementation is highly optimized. The bigger concern is the complexity of the regex if you were to use that, but simple list lookups are very fast. You shouldn't see any latency increase."
+    },
+    {
+      "role": "user",
+      "content": "That is reassuring. I am looking at my deployment pipeline now. Are there any edge cases with Nginx acting as a reverse proxy? Sometimes the proxy strips these headers or overrides them before they reach the browser."
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, Nginx configuration can definitely interfere. If you have add_header directives in your Nginx config for CORS, they might conflict with the headers injected by FastAPI. It is best to remove manual CORS handling from your nginx.conf and let FastAPI handle it entirely, or ensure your Nginx headers are 'always' set to avoid duplication errors."
+    },
+    {
+      "role": "user",
+      "content": "Good catch. I found an old 'add_header' directive in my Nginx virtual host configuration. Removing that should clean up the response. Do you think I should add a log for failed CORS attempts in a custom Middleware subclass?"
+    },
+    {
+      "role": "assistant",
+      "content": "If you need auditing, create a simple logging middleware that runs just before CORSMiddleware. However, standard CORS errors are usually logged by the browser, not the server. If you want to debug backend-level blocking, logging the Origin header on every request will suffice."
+    },
+    {
+      "role": "user",
+      "content": "I think I have enough to close this out. I'll summarize the steps: fix the middleware order, set explicit methods, disable credentials if not needed, and clean up conflicting Nginx headers. Thanks for the guidance on this."
+    },
+    {
+      "role": "assistant",
+      "content": "Happy to help. Those steps cover the majority of issues people face with #1663. Just make sure to verify the final deployed environment once more after the Nginx change, as that is a common spot for 'last-mile' configuration errors."
+    },
+    {
+      "role": "user",
+      "content": "One last question: Does the CORSMiddleware support subdomains via a wildcard, like 'https://*.example.com'? I see developers asking about that frequently in the comments of the issue."
+    },
+    {
+      "role": "assistant",
+      "content": "Actually, the standard CORSMiddleware does not natively support pattern-based origin matching. You would need to provide a hardcoded list of allowed subdomains or write a custom middleware that validates the Origin header against a regular expression before passing the request to the application logic."
+    },
+    {
+      "role": "user",
+      "content": "Understood. I will stick to explicit domains for now for security. Updating the docs now with these recommendations. I'm ready to close the ticket."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent. It sounds like you have a very robust solution now. Closing the issue after documenting your findings is exactly what the open-source community needs. Great work debugging this systematically."
+    },
+    {
+      "role": "user",
+      "content": "Actually, before I close the issue, I ran into one final hiccup. Testing with a browser-based client, I see that the OPTIONS request returns 200, but the subsequent POST request fails with 403 Forbidden. Is it possible that my custom 'SecurityMiddleware' is running before the CORSMiddleware and rejecting the request?"
+    },
+    {
+      "role": "assistant",
+      "content": "That is highly likely. Middleware in FastAPI is executed in the order they are added. If 'SecurityMiddleware' performs authentication or header validation, it might be blocking the request before 'CORSMiddleware' has a chance to set the necessary access control headers. Ensure your 'SecurityMiddleware' is added after 'CORSMiddleware' in your 'app.add_middleware' calls."
+    },
+    {
+      "role": "user",
+      "content": "I checked 'main.py' and I was indeed adding the security middleware first. I swapped the order, but now I get an 'Internal Server Error' when the OPTIONS request is made. The traceback shows 'AttributeError: 'NoneType' object has no attribute 'user' inside my dependency injection logic."
+    },
+    {
+      "role": "assistant",
+      "content": "The 'OPTIONS' request is a preflight check and does not contain your authentication headers or tokens. Your dependency injection logic is likely trying to access the user context, which is missing. You should update your dependency to check if the request method is 'OPTIONS' and skip authentication if so."
+    },
+    {
+      "role": "user",
+      "content": "That makes sense. I'll wrap the logic in a check: 'if request.method == \"OPTIONS\": return None'. Does that look safe, or should I be returning a specific 'Guest' user object to prevent the 'AttributeError'?"
+    },
+    {
+      "role": "assistant",
+      "content": "Returning 'None' is fine as long as your application code is null-safe. Alternatively, returning an 'AnonymousUser' instance is often cleaner for downstream dependencies that expect a user object. This pattern is common in FastAPI apps using 'Security' with OAuth2PasswordBearer."
+    },
+    {
+      "role": "user",
+      "content": "I implemented the 'AnonymousUser' pattern in 'auth_utils.py' and it resolved the 'AttributeError'. Now the POST request correctly proceeds, but I am noticing that 'allow_credentials' must be set to 'True' for my cookies to persist. Are there any security risks I should be aware of here?"
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, setting 'allow_credentials=True' is a security risk if 'allow_origins' is set to '*'. Browsers will block this configuration for safety. You must provide a list of specific origins, such as '[\"https://www.example.com\"]', rather than the wildcard. Ensure your 'SameSite' cookie policy is set to 'Lax' or 'None' as well."
+    },
+    {
+      "role": "user",
+      "content": "I updated my 'CORSMiddleware' configuration to use an explicit list: 'allow_origins=[\"https://www.example.com\"]'. Everything is working now. Should I add a note in the documentation about this specific security requirement when using credentials?"
+    },
+    {
+      "role": "assistant",
+      "content": "Absolutely. Documenting the interaction between 'allow_origins' and 'allow_credentials' will save other developers a lot of frustration. It is a classic pitfall in the W3C CORS specification that catches many people off guard when moving from development to production."
+    },
+    {
+      "role": "user",
+      "content": "I am drafting the update for the 'docs/en/docs/tutorial/cors.md' file. Is it better to put this in a 'Troubleshooting' section at the end of the page, or keep it integrated within the main 'CORSMiddleware' usage example?"
+    },
+    {
+      "role": "assistant",
+      "content": "A 'Troubleshooting' section is generally better for these kinds of 'gotchas'. It keeps the primary tutorial focused on the standard implementation while providing a clear place for users to find solutions when they hit the 'Access-Control-Allow-Origin' browser errors you initially reported."
+    },
+    {
+      "role": "user",
+      "content": "I will go with the 'Troubleshooting' section approach. I also plan to include a small snippet on how to debug preflight requests using the browser's Network tab. Any other tips for someone debugging this for the first time?"
+    },
+    {
+      "role": "assistant",
+      "content": "Advise them to use 'curl -v -X OPTIONS -H \"Origin: http://www.example.com\" -H \"Access-Control-Request-Method: POST\" http://127.0.0.1:8086/api' in their terminal. It's much faster than relying on the browser console and eliminates potential caching issues with the browser's local state."
+    },
+    {
+      "role": "user",
+      "content": "That is a great debugging tip. I have updated the documentation locally and verified that the examples in 'tutorial/cors.md' are consistent with the changes. I think I am ready to submit the PR."
+    },
+    {
+      "role": "assistant",
+      "content": "Before you submit, ensure you've run 'make test' or the equivalent test suite in the 'tests/' directory. Check that your changes didn't break existing tests, especially those related to middleware order in 'test_middleware.py'."
+    },
+    {
+      "role": "user",
+      "content": "I ran 'pytest tests/test_middleware.py' and all tests passed. No regressions detected. I am confident in the PR now."
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect. Submitting the PR with those clear tests and updated documentation will be a huge benefit for the repository. You've turned a confusing issue into a learning resource."
+    },
+    {
+      "role": "user",
+      "content": "PR is submitted. I'll ping the maintainers in the thread. Thanks again for sticking with me through the middleware ordering and authentication edge cases."
+    },
+    {
+      "role": "assistant",
+      "content": "You are very welcome! It has been a pleasure troubleshooting this with you. Let me know if you run into any other roadblocks with FastAPI or the Starlette ecosystem."
+    },
+    {
+      "role": "user",
+      "content": "I noticed a CI failure in the PR. The test 'tests/test_middleware.py::test_cors_preflight' is failing on the environment where the proxy headers are strictly enforced. Did I miss a configuration detail?"
+    },
+    {
+      "role": "assistant",
+      "content": "It sounds like the proxy headers are stripping the 'Origin' header before it hits your FastAPI app. Check your 'test_middleware.py' configuration. Are you using 'TestClient' with 'base_url' explicitly set to something that might interfere with how Starlette's 'CORSMiddleware' inspects the request origin?"
+    },
+    {
+      "role": "user",
+      "content": "Ah, that is it! I was initializing 'TestClient(app, base_url='http://test')' but the middleware expects a full URL context that matches the 'allow_origins' list. Updating to use 'http://www.example.com' seems to fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "That makes perfect sense. 'CORSMiddleware' validates the 'Origin' header against the incoming request's base URL context. If they don't align during the handshake, it defaults to blocking the request. Adjust your test fixture accordingly."
+    },
+    {
+      "role": "user",
+      "content": "I've updated the 'tests/test_middleware.py' file. The tests now pass consistently. Should I add a specific 'Advanced' section to 'docs/en/docs/tutorial/cors.md' about 'TestClient' configuration for CORS?"
+    },
+    {
+      "role": "assistant",
+      "content": "Adding an 'Advanced' section is a great idea. It prevents other developers from losing hours to the exact same 'TestClient' mismatch. Ensure you emphasize that the 'base_url' must match the origin under test."
+    },
+    {
+      "role": "user",
+      "content": "I am drafting that section now. Is there a way to make the 'CORSMiddleware' more verbose in logs to help users debug this without looking at the 'tests' code?"
+    },
+    {
+      "role": "assistant",
+      "content": "You could suggest users set the logging level to 'DEBUG' for 'starlette.middleware.cors'. Adding that snippet to the docs would be incredibly helpful for production debugging when headers are being swallowed by Nginx."
+    },
+    {
+      "role": "user",
+      "content": "Good point. I will add a 'Logging' subsection. Does 'starlette.middleware.cors' log the reason for rejection, or just the failed request?"
+    },
+    {
+      "role": "assistant",
+      "content": "It usually logs that a request was denied due to CORS but might not give the full reason. It often requires custom middleware logic if you want to inspect why the header check failed exactly."
+    },
+    {
+      "role": "user",
+      "content": "I will keep it simple for now and just point to the 'DEBUG' logging. Pushing the updated documentation commit to the branch now."
+    },
+    {
+      "role": "assistant",
+      "content": "The PR looks solid now. By including the 'TestClient' tip and the logging suggestion, you have covered both the development cycle and the production runtime concerns."
+    },
+    {
+      "role": "user",
+      "content": "The PR maintainer asked if these changes could break 'ProxyHeadersMiddleware'. I need to verify they play nice together. Any thoughts on the order?"
+    },
+    {
+      "role": "assistant",
+      "content": "Always place 'ProxyHeadersMiddleware' before 'CORSMiddleware'. If you place it after, 'CORSMiddleware' will see the IP of the proxy instead of the client origin, which often leads to the exact CORS failures we discussed."
+    },
+    {
+      "role": "user",
+      "content": "Verified the order in 'main.py'. 'ProxyHeadersMiddleware' is added first. I should mention this middleware sequence in the docs explicitly."
+    },
+    {
+      "role": "assistant",
+      "content": "Yes, documenting the middleware chain order is critical. FastAPI executes middleware in a 'last-in, first-out' (LIFO) stack order, so 'app.add_middleware' calls order matters significantly."
+    },
+    {
+      "role": "user",
+      "content": "Wait, I thought it was first-in-first-out? I need to re-read the Starlette documentation on middleware stack execution."
+    },
+    {
+      "role": "assistant",
+      "content": "Correction: Starlette processes them in the order added, but the response flows back in reverse. Check the 'middleware.py' implementation in Starlette; your order for CORS and Proxies is definitely standard best practice."
+    },
+    {
+      "role": "user",
+      "content": "Everything checks out. The PR is ready for final review. Thanks for catching the order nuance!"
+    },
+    {
+      "role": "assistant",
+      "content": "You are very welcome! This has been a comprehensive look at FastAPI's middleware system. Good luck with the merge."
+    },
+    {
+      "role": "user",
+      "content": "I just got a notification that the PR passed CI, but there's a minor regression in the 'test_cors.py' suite. It seems like the order of middleware is affecting the tests even when I didn't change the test code itself."
+    },
+    {
+      "role": "assistant",
+      "content": "That is unexpected. Check the 'test_cors.py' setup to see if you are initializing the app instance inside the test function. If 'CORSMiddleware' is being re-added in different sequences, the stack might be inconsistent."
+    },
+    {
+      "role": "user",
+      "content": "You are right. I see that 'test_client' was initialized with a fixture that defines the middleware order globally, but one specific test case was manually overriding the app object. I'll unify the fixtures."
+    },
+    {
+      "role": "assistant",
+      "content": "Great catch. Using a single 'pytest' fixture in 'conftest.py' that handles the base 'FastAPI' app instance will ensure your middleware stack is identical across every unit test, preventing these ghost regressions."
+    },
+    {
+      "role": "user",
+      "content": "Refactoring the fixture now. Moving the middleware configuration into a centralized 'setup_app' function in 'conftest.py' should clean up the redundancy. Do you think that will impact the integration tests?"
+    },
+    {
+      "role": "assistant",
+      "content": "It shouldn't, as long as you're still injecting the app into the 'TestClient'. Make sure the 'ProxyHeadersMiddleware' is explicitly added in that centralized function to maintain consistency across the entire suite."
+    },
+    {
+      "role": "user",
+      "content": "Implemented the central 'setup_app' in 'conftest.py'. All tests in 'test_cors.py' passed locally. However, I am still worried about production deployments behind Nginx. Is there any way to log the headers explicitly?"
+    },
+    {
+      "role": "assistant",
+      "content": "You can add a custom 'BaseHTTPMiddleware' to intercept and log the headers for every request. Just add it after the 'CORSMiddleware' in 'main.py' to see the processed results before they leave the application."
+    },
+    {
+      "role": "user",
+      "content": "That is a clever diagnostic step. I'll add a 'DebugMiddleware' that logs 'Origin' and 'Access-Control-Allow-Origin'. Should I make this a permanent part of the codebase or just for debugging purposes?"
+    },
+    {
+      "role": "assistant",
+      "content": "Definitely just for debugging. Do not include it in the final commit. You could create a temporary branch 'debug-cors-headers' to verify the header transformation in production-like environments without polluting the main branch."
+    },
+    {
+      "role": "user",
+      "content": "Good call. I have verified the headers are being set correctly in my staging environment. The 'Access-Control-Allow-Origin' header now reflects the correct client origin after the proxy fixes."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent! That confirms your 'ProxyHeadersMiddleware' configuration is correctly stripping and reconstructing the headers before the 'CORSMiddleware' inspects them. Your hypothesis on the flow was correct."
+    },
+    {
+      "role": "user",
+      "content": "The PR maintainer is now asking if we should add these 'CORSMiddleware' order warnings to the 'fastapi/middleware/cors.py' docstrings themselves, rather than just the tutorial."
+    },
+    {
+      "role": "assistant",
+      "content": "That is an excellent proactive suggestion. Adding it to the docstrings of 'CORSMiddleware' ensures that anyone using IDE autocompletion or browsing the source will immediately see the requirement regarding middleware order."
+    },
+    {
+      "role": "user",
+      "content": "Updating the docstring in 'fastapi/middleware/cors.py' now. I'll add a warning block highlighting the importance of the LIFO nature of middleware response processing and the reliance on preceding proxy middleware."
+    },
+    {
+      "role": "assistant",
+      "content": "Looks perfect. Make sure to reference the GitHub issue '#1663' in the docstring note so future maintainers understand why this specific warning was added. It adds significant context to the code."
+    },
+    {
+      "role": "user",
+      "content": "Added the issue reference. Pushing the final changes to the PR now. It feels much more robust now that the documentation exists both in the tutorial and the source code."
+    },
+    {
+      "role": "assistant",
+      "content": "You have definitely gone above and beyond. This will prevent many users from falling into the same trap with CORS and proxies. You're ready to request the final sign-off."
+    },
+    {
+      "role": "user",
+      "content": "Requesting final review. It has been a pleasure working through this complex issue with you. I feel much more confident about how Starlette's middleware stack functions."
+    },
+    {
+      "role": "assistant",
+      "content": "It has been my pleasure as well! Your persistence in testing and validating the middleware order was the key to this solution. I am confident the maintainers will appreciate the detail."
+    },
+    {
+      "role": "user",
+      "content": "I received a notification that the maintainer wants to add a test case to 'tests/test_middleware_cors.py' specifically simulating the proxy behavior we discussed. Do you have a suggestion for the structure?"
+    },
+    {
+      "role": "assistant",
+      "content": "Great idea. Use 'httpx' in 'tests/test_middleware_cors.py' to mock the 'X-Forwarded-Proto' and 'X-Forwarded-Host' headers. Create a helper function 'test_proxy_cors_integration' to ensure 'CORSMiddleware' correctly parses these."
+    },
+    {
+      "role": "user",
+      "content": "Implemented the test case. It uses 'TestClient' to inject headers. The assertion fails if the 'Access-Control-Allow-Origin' does not match the 'X-Forwarded-Host'. This should solidify the PR."
+    },
+    {
+      "role": "assistant",
+      "content": "Ensure you are using 'app.add_middleware(CORSMiddleware, ...)' inside the test setup. If you pass headers directly to 'client.get()', it should simulate the downstream proxy environment perfectly."
+    },
+    {
+      "role": "user",
+      "content": "The test passes locally, but the CI runner is reporting a timeout on the newly added test. Could it be an issue with the event loop in 'tests/test_middleware_cors.py'?"
+    },
+    {
+      "role": "assistant",
+      "content": "Check if 'TestClient' is being instantiated inside an 'async with' block. Sometimes the loop doesn't clean up correctly if the middleware isn't awaited. Check 'pytest-asyncio' configuration."
+    },
+    {
+      "role": "user",
+      "content": "Good catch. Switching to an async test function resolved the timeout. The CI pipeline is now green. Do you think we should expose a 'proxy_enabled' flag in 'CORSMiddleware'?"
+    },
+    {
+      "role": "assistant",
+      "content": "I would advise against adding more complexity to 'CORSMiddleware'. FastAPI prefers 'ProxyHeadersMiddleware' to handle the heavy lifting. Keep the logic simple and rely on existing middleware chains."
+    },
+    {
+      "role": "user",
+      "content": "Agreed. Let's stick to the current implementation. I've updated the PR description to mention that 'ProxyHeadersMiddleware' is the recommended way to handle these scenarios, preventing scope creep."
+    },
+    {
+      "role": "assistant",
+      "content": "That is the best approach. Maintainers prefer cleaner PRs. Are you comfortable with the current test coverage, or should we add a negative case to verify what happens without the proxy?"
+    },
+    {
+      "role": "user",
+      "content": "Adding a negative test case now. I'll verify that without 'ProxyHeadersMiddleware', the 'Access-Control-Allow-Origin' reverts to the default behavior. This provides a clear contrast in the test suite."
+    },
+    {
+      "role": "assistant",
+      "content": "That's a smart validation strategy. It demonstrates that the middleware behaves predictably even when the proxy headers are missing, which is essential for backwards compatibility."
+    },
+    {
+      "role": "user",
+      "content": "The negative test case confirmed that everything behaves as expected. The PR is now ready for re-review. I feel very good about the documentation and testing coverage provided."
+    },
+    {
+      "role": "assistant",
+      "content": "Fantastic work. You have turned a confusing issue into a learning resource for the entire FastAPI community. I look forward to seeing this merged into the main branch."
+    },
+    {
+      "role": "user",
+      "content": "The maintainer just commented: 'Looks good, merging after the final squash.' It\u2019s exciting to see this go from a simple CORS bug report to a solid documentation update."
+    },
+    {
+      "role": "assistant",
+      "content": "It\u2019s the ideal lifecycle for a well-resolved issue. You identified the gap, implemented the fix, verified it with tests, and updated the docs. You earned this successful merge."
+    },
+    {
+      "role": "user",
+      "content": "Thanks for your guidance through this. I learned more about how 'starlette' middleware interacts with the 'fastapi' application instance in these last few days than I did in months."
+    },
+    {
+      "role": "assistant",
+      "content": "The pleasure was all mine. Understanding the request lifecycle, especially how middleware is ordered, is the secret to mastering Starlette-based frameworks. You are now an expert on this."
+    },
+    {
+      "role": "user",
+      "content": "Everything is merged. I'm going to close the issue #1663 now and link the PR. Time to move on to the next task in our backlog. Stay safe!"
+    },
+    {
+      "role": "assistant",
+      "content": "Task completed successfully. Closing the ticket is the final step in closing the loop. Feel free to reach out whenever you encounter another tricky architecture problem!"
+    },
+    {
+      "role": "user",
+      "content": "Hey, I noticed a follow-up issue popped up in the tracker regarding custom 'CORSMiddleware' implementations in 'main.py' under high-load scenarios. Seems like some users are seeing intermittent '500 Internal Server Error' responses when headers are malformed."
+    },
+    {
+      "role": "assistant",
+      "content": "That sounds concerning. If users are getting 500s rather than 403s or 400s, there might be an unhandled exception within the middleware sequence. Are there any logs showing up in the 'uvicorn' output for those requests?"
+    },
+    {
+      "role": "user",
+      "content": "Yes, I'm seeing 'AttributeError: 'NoneType' object has no attribute 'headers'' in the 'starlette.middleware.cors.CORSMiddleware.dispatch' method during concurrent stress tests with 'locust'."
+    },
+    {
+      "role": "assistant",
+      "content": "That suggests the request context is being cleared or improperly accessed during an asynchronous race condition. Let's inspect 'fastapi/middleware/cors.py' to see how it initializes the request state."
+    },
+    {
+      "role": "user",
+      "content": "I've added some debug prints in 'starlette/middleware/cors.py' and it appears that under extreme load, the 'Scope' object isn't being passed correctly to the next 'asgi' application component."
+    },
+    {
+      "role": "assistant",
+      "content": "Interesting. Check the 'async def __call__' implementation. Is there any shared mutable state within that specific middleware instance that might be affected by multiple concurrent 'await' calls?"
+    },
+    {
+      "role": "user",
+      "content": "Found it! There is a class-level variable in a custom wrapper in 'middleware_utils.py' that was being used to cache the origin header. It was getting overwritten by simultaneous requests."
+    },
+    {
+      "role": "assistant",
+      "content": "That is definitely the smoking gun. Class-level attributes in middleware are a classic pitfall in async frameworks. You should convert that to a local variable inside the 'dispatch' method."
+    },
+    {
+      "role": "user",
+      "content": "Refactored the code in 'middleware_utils.py' to move the origin header into the request context dictionary. Re-running the 'locust' stress test now to verify the fix."
+    },
+    {
+      "role": "assistant",
+      "content": "That is the standard fix for request-local storage. Let's see if the 'AttributeError' persists after this change. Are you seeing any latency improvements as well?"
+    },
+    {
+      "role": "user",
+      "content": "Testing confirms the '500' errors are gone and the throughput increased by about 15 percent. This confirms the locking was causing a minor bottleneck during contention."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent. It is always satisfying to fix a concurrency bug that also yields a performance boost. Should we create a new test in 'tests/test_cors.py' to prevent this regression?"
+    },
+    {
+      "role": "user",
+      "content": "Absolutely. I'm adding a test using 'pytest-asyncio' to simulate concurrent requests with varied 'Origin' headers to ensure thread-safety for the middleware instance."
+    },
+    {
+      "role": "assistant",
+      "content": "Good call. Ensure you use 'asyncio.gather' in the test case to force the concurrent execution and properly trigger the old race condition if it were to return."
+    },
+    {
+      "role": "user",
+      "content": "The test passed consistently across 100 iterations. I am confident in this patch. I'll push the changes to 'middleware_utils.py' and the new test file now."
+    },
+    {
+      "role": "assistant",
+      "content": "Great work. This strengthens the overall robustness of the CORS handling. Any other edge cases you want to cover before we wrap up this session?"
+    },
+    {
+      "role": "user",
+      "content": "I think this covers the main architectural risks we identified. I'll document these findings in the 'CONTRIBUTING.md' to warn others about shared state in middleware."
+    },
+    {
+      "role": "assistant",
+      "content": "That's a very proactive move. Documentation is just as important as the code when it comes to maintaining long-term stability in open source."
+    },
+    {
+      "role": "user",
+      "content": "Everything is pushed and documented. Thanks for keeping me focused on the concurrency aspect; I would have spent hours debugging the wrong thing otherwise."
+    },
+    {
+      "role": "assistant",
+      "content": "You are very welcome! It was a team effort. Enjoy the clean build logs, and I'll see you for the next sprint review."
+    },
+    {
+      "role": "user",
+      "content": "Wait, I just noticed that while the CORS issue is resolved for the main API routes, some WebSocket endpoints in 'app/api/ws.py' are still throwing origin errors. Is CORSMiddleware even intended for WebSockets?"
+    },
+    {
+      "role": "assistant",
+      "content": "Good observation. CORSMiddleware is primarily designed for standard HTTP requests. WebSockets use a different handshake mechanism, so it might not be intercepting those calls properly."
+    },
+    {
+      "role": "user",
+      "content": "That makes sense. If I look at 'starlette/middleware/cors.py', it seems to filter specifically for HTTP request types. How should I handle the origin verification for WebSockets?"
+    },
+    {
+      "role": "assistant",
+      "content": "You can manually validate the 'Origin' header inside your WebSocket 'connect' method. Check the 'scope' object in your 'async def websocket_endpoint(websocket: WebSocket)' function."
+    },
+    {
+      "role": "user",
+      "content": "I'll implement a custom check in 'app/api/ws.py' that validates the 'Origin' header against a whitelist. Should I use the same list defined in 'middleware_utils.py'?"
+    },
+    {
+      "role": "assistant",
+      "content": "Absolutely, re-using that configuration maintains consistency. Ensure you handle the case where the 'Origin' header is missing, which might occur in some server-side scripts."
+    },
+    {
+      "role": "user",
+      "content": "I've added the check, but now 'pytest' is failing on 'tests/test_ws.py' because my mock client isn't sending the 'Origin' header. I need to update the headers in the 'test_client.websocket_connect' call."
+    },
+    {
+      "role": "assistant",
+      "content": "Update your test fixture to include 'headers={'Origin': 'http://www.example.com'}' in the connect method. That should simulate the browser environment correctly."
+    },
+    {
+      "role": "user",
+      "content": "That fixed it. The tests are green again. Since this is effectively a manual middleware implementation, should I wrap it into a helper function in 'app/utils.py'?"
+    },
+    {
+      "role": "assistant",
+      "content": "That's a smart refinement. Moving it to a reusable function in 'app/utils.py' will keep the controller logic clean and make it easier to add logging later."
+    },
+    {
+      "role": "user",
+      "content": "Refactoring now. I'll call it 'verify_origin'. It will accept the 'scope' and the allowed list, raising a 'WebSocketDisconnect' if validation fails."
+    },
+    {
+      "role": "assistant",
+      "content": "Make sure to import 'WebSocketDisconnect' from 'fastapi' correctly to ensure the connection terminates with a proper '403' code rather than a silent drop."
+    },
+    {
+      "role": "user",
+      "content": "Implemented. The error handling is much more explicit now. I'm adding a specific unit test for this utility in 'tests/test_utils.py' to verify the 403 response."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent. Testing the edge case of an unauthorized origin will ensure your 'verify_origin' function behaves as expected under load."
+    },
+    {
+      "role": "user",
+      "content": "Everything is running smoothly. I've updated 'CONTRIBUTING.md' to note that WebSockets require manual origin validation until we see native support in 'CORSMiddleware'."
+    },
+    {
+      "role": "assistant",
+      "content": "That is a huge help for the community. The repository contributors will definitely appreciate that clarity on WebSockets."
+    },
+    {
+      "role": "user",
+      "content": "I'm ready to merge these changes into the main branch. Any final advice on the 'pytest' configuration before I finalize the PR?"
+    },
+    {
+      "role": "assistant",
+      "content": "Just check that your 'conftest.py' is not forcing global origin settings that might conflict with these new localized tests."
+    },
+    {
+      "role": "user",
+      "content": "Good catch! I found a stray config in 'pytest.ini'. Removing it, and everything is green. Thanks for the final review!"
+    },
+    {
+      "role": "assistant",
+      "content": "You're very welcome. It looks like you have a solid, production-ready solution now. Looking forward to seeing the PR merged."
+    },
+    {
+      "role": "user",
+      "content": "I've pushed the final commit to the branch, but I noticed a slight performance drop in the test suite for 'test_middleware_performance.py'. Is that expected with the added logic?"
+    },
+    {
+      "role": "assistant",
+      "content": "It could be an overhead from the 'verify_origin' function calls inside the middleware loop. Have you profiled if the string comparison for origins is causing latency?"
+    },
+    {
+      "role": "user",
+      "content": "I checked with 'cProfile', and it's negligible. Actually, the slowdown in 'test_middleware_performance.py' was due to redundant log initialization in each test iteration."
+    },
+    {
+      "role": "assistant",
+      "content": "That makes sense. If you move the logger setup to a fixture in 'conftest.py' with session scope, it should stabilize your execution times significantly."
+    },
+    {
+      "role": "user",
+      "content": "Good idea. I'll move that into a 'pytest.fixture(scope='session')' block. That should clean up the noise in the logs and improve test runtime."
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect. Once that's cleaned up, check if you are still seeing consistent results across different Python versions in your CI matrix."
+    },
+    {
+      "role": "user",
+      "content": "All tests are green on Python 3.8 through 3.12. The build is looking solid. I'm tagging the PR for review by the FastAPI core team."
+    },
+    {
+      "role": "assistant",
+      "content": "Great work. Ensure you link the original Issue #1663 in your PR description so the maintainers have the necessary context for the fix."
+    },
+    {
+      "role": "user",
+      "content": "Done. I've added a comment to #1663 explaining that this implementation covers the gap in 'CORSMiddleware' for WebSocket origin handling specifically."
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent communication. Transparency with the issue reporters makes it much easier for the maintainers to justify merging your PR."
+    },
+    {
+      "role": "user",
+      "content": "I've just received a comment from a maintainer suggesting an adjustment to 'CORSMiddleware.dispatch'. They want the origin check to be more configurable."
+    },
+    {
+      "role": "assistant",
+      "content": "That's a reasonable request. Can you allow a custom 'origin_validator' callable in the middleware constructor as an optional argument?"
+    },
+    {
+      "role": "user",
+      "content": "I can modify 'CORSMiddleware' to accept an 'on_origin_error' callback. That would keep it flexible for users who need custom auth logging or headers."
+    },
+    {
+      "role": "assistant",
+      "content": "Exactly. Just ensure the default behavior remains backwards compatible so you don't break existing 'FastAPI' applications currently using the middleware."
+    },
+    {
+      "role": "user",
+      "content": "I'll use a type-hinted optional function in the 'CORSMiddleware' class definition. This should satisfy the requirement without causing breaking changes."
+    },
+    {
+      "role": "assistant",
+      "content": "Sounds like a plan. Make sure to update the docstrings in 'starlette/middleware/cors.py' to document the new optional parameter clearly."
+    },
+    {
+      "role": "user",
+      "content": "Updated the docstrings and added a new test case for the custom validator callback. Re-running the suite now to ensure no regressions."
+    },
+    {
+      "role": "assistant",
+      "content": "You are covering all bases. This level of diligence is exactly why this PR will likely be accepted without many more rounds of revisions."
+    },
+    {
+      "role": "user",
+      "content": "The PR has been merged! Thanks for guiding me through the implementation and the testing strategy. It was a long journey from #1663."
+    },
+    {
+      "role": "assistant",
+      "content": "Congratulations on the successful merge! Your contribution to the ecosystem is significant. Enjoy the well-deserved victory on this FastAPI improvement."
+    }
+  ]
+}

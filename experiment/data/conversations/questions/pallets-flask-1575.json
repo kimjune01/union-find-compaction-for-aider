@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "pallets-flask-1575",
+    "question": "Which file in the Flask repository was specifically mentioned as failing due to teardown logic issues under PyPy?",
+    "expected_answer": "tests/test_ctx.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "pallets-flask-1575",
+    "question": "What error message was reported when the stack was cleared prematurely in the test suite?",
+    "expected_answer": "RuntimeError: working outside of application context",
+    "category": "error_message",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "pallets-flask-1575",
+    "question": "Which specific function in flask/ctx.py were developers instructed to check to ensure the LIFO structure was preserved?",
+    "expected_answer": "push()",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "pallets-flask-1575",
+    "question": "What was the performance impact, in microseconds, of the context push after the implementation of contextvars?",
+    "expected_answer": "2 microseconds",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "pallets-flask-1575",
+    "question": "What was the name of the hotfix branch created from the 1.0rc1 tag to address the AttributeError in issue #1602?",
+    "expected_answer": "hotfix-1.0rc2",
+    "category": "decision",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "pallets-flask-1575",
+    "question": "Which script was identified for generating the changelog, despite being described as outdated?",
+    "expected_answer": "scripts/make_changelog.py",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "pallets-flask-1575",
+    "question": "What specific file was modified to add a polyfill for the contextvars import logic?",
+    "expected_answer": "flask/_compat.py",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "pallets-flask-1575",
+    "question": "What was the name of the test case added to tests/test_appctx.py to prevent regression in the teardown logic?",
+    "expected_answer": "test_teardown_with_failing_callbacks",
+    "category": "test_case",
+    "region": "late"
+  }
+]

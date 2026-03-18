@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention `main.js`, but it does not say that this file was in the `resources/app` folder or that it was identified as identical to the VS Code structure. That specific factual link is missing, so the expected answer cannot be determined from the summary alone."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly names `product.json` among the files discussed. That is the root-level product metadata file, so the expected answer is directly present."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on telemetry hardening, extension host behavior, and related tests. It does not mention a stack overflow, `window.reload` events, or identify `ipcMain` as the cause, so the expected answer cannot be recovered from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly includes both `ipc.ts` and the corresponding test file `test/electron-browser/ipc.test.ts` in the earlier list of files worked on. That gives enough information to identify the test file tied to changes in `ipc.ts`."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `src/vs/platform/telemetry/common/telemetryAppender.ts` only as one of many files discussed earlier, but it does not include any detail about a retry limit. There is no stated or implied value for the maximum number of retries before the patch, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions [lifecycle.ts] only as one of several files involved in extension host race condition work. It does not state any exported error type from that file, and there is no strong implication of `LifecycleStateError`."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the telemetry privacy fix modified both `src/vs/platform/telemetry/common/telemetryService.ts` and `src/vs/platform/telemetry/common/telemetryUtils.ts` to implement a domain whitelist. That directly identifies `telemetryUtils.ts` as containing the whitelist of allowed domains."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that `configurationRegistry.ts` was updated to restrict telemetry URL settings to application scope. That directly matches the expected answer, so the detail is preserved clearly enough to answer the question."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on telemetry hardening, configuration scope, and related test files. It never mentions the `resources/app` folder or identifies any file there as matching the VS Code structure, so `main.js` cannot be determined from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on telemetry hardening, configuration scope, tests, and extension host handling. It does not mention any root-level product metadata file, nor does it reference `product.json` or repackaged IDE metadata."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history is focused on telemetry security hardening, configuration scope restrictions, and extension host telemetry handling. It does not mention any stack overflow related to `window.reload` events, nor does it identify `ipcMain` or any other module as the cause."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history is entirely about telemetry, configuration scope, extension host handling, and related tests. It does not mention `ipc.ts` or any test file for IPC, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on configuration scope restrictions, whitelist validation, telemetry service behavior, and related tests. It does not mention `telemetryAppender.ts`, any retry logic, or a numeric retry limit, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions earlier work on extension host lifecycle and timing issues, but it does not name `lifecycle.ts` or any exported error type from it. There is no specific reference that would let us recover `LifecycleStateError` from the summary alone."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the hardcoded whitelist was implemented in `src/vs/platform/telemetry/common/telemetryUtils.ts`. It also later references checking that `telemetryUtils.ts` does not leak blacklist details, reinforcing that this file contains the allowed-domain logic."
+  },
+  {
+    "conversation_id": "microsoft-vscode-191229",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the user \"updated `configurationRegistry.ts` to restrict the configuration to 'application' scope only.\" That directly matches the expected answer about which configuration registry file was changed."
+  }
+]

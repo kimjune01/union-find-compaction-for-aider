@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "What configuration value was initially set in the allow_origins list by the user that failed to resolve the CORS issue?",
+    "expected_answer": "['*']",
+    "category": "configuration",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "In which file did the user add a print statement to the dispatch method to troubleshoot the middleware's reach?",
+    "expected_answer": "starlette/middleware/cors.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "What specific error code was the user receiving on their GET request after the preflight passed?",
+    "expected_answer": "403 Forbidden",
+    "category": "error_message",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "Which Python file contained the user's dependency logic that was checking the 'Referer' header and causing 403 errors?",
+    "expected_answer": "security.py",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "What custom Python class was the user returning from routes that caused the header issue?",
+    "expected_answer": "JSONResponse",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "What attribute error was triggered when the user correctly ordered middleware but neglected to skip authentication for OPTIONS requests?",
+    "expected_answer": "'NoneType' object has no attribute 'user'",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "Which specific middleware should be placed before CORSMiddleware to ensure the correct client origin is identified?",
+    "expected_answer": "ProxyHeadersMiddleware",
+    "category": "library",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "tiangolo-fastapi-1663",
+    "question": "What is the name of the GitHub issue referenced throughout the conversation for tracking the CORS resolution?",
+    "expected_answer": "#1663",
+    "category": "test_case",
+    "region": "late"
+  }
+]

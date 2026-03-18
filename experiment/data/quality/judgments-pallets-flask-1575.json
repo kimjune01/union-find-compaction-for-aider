@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses teardown logic problems in `tests/test_appctx.py` and changes in `flask/ctx.py`, but it never mentions PyPy or `tests/test_ctx.py`. Since the specific file named in the expected answer does not appear or follow from the summary, the detail is not recoverable."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions context teardown work, deprecation of `_request_ctx_stack`, and related tests, but it never states the specific error message produced when the stack was cleared prematurely. The expected `RuntimeError: working outside of application context` is not recoverable from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses `flask/ctx.py` in the context of teardown handling, `_teardown_appcontext`, and exception suppression, but it never mentions preserving a LIFO structure or identifies a specific function for that purpose. Since `push()` is not stated or strongly implied, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions only a relative benchmark result: about a 5% increase in overhead due to `ContextVar`. It does not state any absolute timing for context push, and there is no mention of `2 microseconds`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions an `AttributeError` in `flask/app.py` and various release steps, but it does not mention issue `#1602` or the name of any hotfix branch created from the `1.0rc1` tag. The specific branch name `hotfix-1.0rc2` cannot be determined from the provided summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions release/versioning work in `scripts/release.py` and later updating `CHANGES.rst`, but it never names any script for generating the changelog. The specific detail `scripts/make_changelog.py` is not present or implied strongly enough."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that Python 3.6 compatibility for the `contextvars` transition was handled by creating `flask/_compat.py`. That strongly matches the expected detail about adding a polyfill for the import logic."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that after patching `flask/ctx.py`, a new regression test was added in `tests/test_appctx.py` named `test_teardown_with_failing_callbacks`. That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does mention teardown-related issues, but it ties them to `tests/test_appctx.py` and `flask/ctx.py`, not to a PyPy-specific failure. It never mentions `tests/test_ctx.py`, so the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several specific errors, such as `AttributeError: 'NoneType' object has no attribute 'json_encoder'` and a `403 Forbidden` deployment error, but it does not mention any failure caused by the stack being cleared prematurely. There is no explicit or strongly implied reference to `RuntimeError: working outside of application context`."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `flask/ctx.py` several times, but only in connection with teardown handling, `_teardown_appcontext`, `_request_ctx_stack` deprecation, and contextvars changes. It does not mention checking `push()` or preserving a LIFO structure, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions that benchmarks were checked and that a technical summary from `docs/performance.rst` would be used, but it does not state any specific performance figure for context push. Since the exact value \"2 microseconds\" is not present or strongly implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a hotfix for an `AttributeError` in Flask 1.0.1 and says it was finalized on the `hotfix-1.0.1` branch. It does not mention issue `#1602`, the `1.0rc1` tag, or a branch named `hotfix-1.0rc2`, so the expected answer cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions updating `CHANGES.rst`, but it does not mention any specific changelog-generation script. There is no reference to an outdated script named `scripts/make_changelog.py`, so the expected answer cannot be derived from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that, to fix Python 3.6 test failures, conditional import logic was implemented \"in a new `flask/_compat.py` file using a polyfill.\" That directly matches the expected answer."
+  },
+  {
+    "conversation_id": "pallets-flask-1575",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \"I added a new test case `test_teardown_with_failing_callbacks` to prevent regression.\" That directly answers the question about the test name added to `tests/test_appctx.py`."
+  }
+]

@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that the deprecation and JSON-handling changes were implemented in `flask/wrappers.py`. It also references checking the `Request` class there, which strongly identifies that file as the location of the Request JSON handling implementation."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses deprecating `Request.json`, warning behavior, tests, and documentation, but it never names any hidden attribute used to track whether a warning was already emitted. Since `_warned_json_access` does not appear or get clearly implied, the detail cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `tests/test_helpers.py` several times in connection with warnings-related changes, including an unused `warnings` import and follow-up test work. But it never specifically states that `warnings.simplefilter('error')` in that file was what triggered the errors, so the exact detail is not recoverable with confidence."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions that `request.get_json()` has a `force` parameter and that its behavior/documentation was updated. However, it does not state the specific detail that this flag overrides the missing content-type requirement, so the expected answer is not fully recoverable from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses tests, CI, docs, and deprecation warnings, but it never mentions any benchmark run or a benchmarking tool. Since `pytest-benchmark` is not stated or implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history clearly states that `request.json` was deprecated in favor of `request.get_json()`, but it never gives a suggested commit message in that exact format. Since the question asks for the specific commit message wording, that detail is not recoverable from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions that `docs/api.rst` was updated with deprecation documentation, including a `deprecated:: 0.12` directive. That is specific enough to identify the file asked about, even if the question paraphrases the transition context."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the implementation uses `warnings.warn` with `stacklevel=2` to make the deprecation warning actionable. That directly matches the expected detail about pointing the warning at user code rather than framework internals."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly references JSON-related changes in `flask/wrappers.py` multiple times, including the `DeprecationWarning` implementation and a final check of the `Request` class there. That is enough to determine that the `Request` class implementation for JSON handling is located in `flask/wrappers.py`."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses adding and verifying `DeprecationWarning` behavior for `request.json`, but it never names any hidden attribute used to avoid repeated warnings. The specific identifier `_warned_json_access` is not present or implied strongly enough to recover it."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history does not mention `warnings.simplefilter('error')` explicitly, but the only test file singled out for a warning-related issue is `tests/test_helpers.py`. That makes the expected answer reasonably recoverable from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses the migration from `request.json` to `request.get_json()`, deprecation warnings, tests, and documentation updates. It does not mention any specific `get_json()` configuration flags or the detail about overriding a missing content-type header with `force=True`."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions tests, CI, docs, and regression testing with `pytest.warns`, but it does not mention any benchmark run or a benchmarking tool. Since `pytest-benchmark` is not stated or implied, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions a commit message for adding a regression test, but it does not mention any suggested commit message wording for the deprecation change itself. The expected phrasing, `Deprecate request.json in favor of request.get_json()`, is not stated or strongly implied."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly mentions updates to `docs/api.rst` in connection with the `request.json` deprecation and documentation changes. That is enough to identify `docs/api.rst` as the file containing the deprecation note."
+  },
+  {
+    "conversation_id": "pallets-flask-1421",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses adding and testing the `DeprecationWarning`, but it never mentions how the warning location was adjusted. The specific standard library detail `stacklevel=2` is not stated or strongly implied."
+  }
+]

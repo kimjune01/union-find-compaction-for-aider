@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "What is the recommended filename for the glossary in the root directory?",
+    "expected_answer": "CONTRIBUTING.md",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "Which configuration extension was recommended to fix admonition rendering issues?",
+    "expected_answer": "pymdownx.details",
+    "category": "configuration",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "What is the official Chinese term for 'asynchronous context manager'?",
+    "expected_answer": "\u5f02\u6b65\u4e0a\u4e0b\u6587\u7ba1\u7406\u5668",
+    "category": "decision",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "Which command is used to lint markdown files in the project?",
+    "expected_answer": "npm run lint:md",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "What is the recommended translation for the FastAPI feature 'WebSocketMiddleware'?",
+    "expected_answer": "WebSocketMiddleware",
+    "category": "decision",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "What status code should be used when raising an HTTPException for a missing mandatory dependency?",
+    "expected_answer": "422",
+    "category": "api_endpoint",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "Which function was modified in fastapi/dependencies/utils.py to fix dependency resolution?",
+    "expected_answer": "get_parameter_sub_dependency",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question": "What library does the project use for markdown linting?",
+    "expected_answer": "markdownlint",
+    "category": "library",
+    "region": "mid"
+  }
+]

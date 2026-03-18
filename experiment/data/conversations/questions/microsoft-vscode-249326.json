@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "Which constant did the assistant suggest introducing to src/vs/base/common/platform.ts to detect HarmonyOS?",
+    "expected_answer": "isHarmony",
+    "category": "constant",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "In which file did the user add a workaround after process.platform returned 'linux'?",
+    "expected_answer": "src/vs/base/node/process.ts",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "Which constant was added to the 'WindowType' interface in src/vs/workbench/electron-sandbox/window.ts?",
+    "expected_answer": "HARMONY_PC",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "What 'Invalid PTY pipe' error-related package was reconfigured in the root package.json?",
+    "expected_answer": "node-pty",
+    "category": "library",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "What polling interval was recommended in src/vs/platform/files/common/watcher.ts to reduce idle CPU overhead?",
+    "expected_answer": "2000ms",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "What memory limit flag was added to the launch arguments in extensionHostProcess.ts?",
+    "expected_answer": "--max-old-space-size=4096",
+    "category": "configuration",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "What tool was replaced for search functionality to support the new architecture?",
+    "expected_answer": "vscode-ripgrep",
+    "category": "library",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "microsoft-vscode-249326",
+    "question": "What specific file watcher delay was set in configurationDefaults.ts to stabilize initialization time?",
+    "expected_answer": "750ms",
+    "category": "configuration",
+    "region": "late"
+  }
+]

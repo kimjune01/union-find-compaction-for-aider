@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions adding `Platform.HarmonyNext` to `platform.ts`, but it does not mention a constant named `isHarmony` in `src/vs/base/common/platform.ts`. Since the specific constant in the expected answer is absent, the detail cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions many HarmonyOS-related file changes, platform flags, and watcher/IPC fixes, but it does not mention a workaround for `process.platform` returning `'linux'`. The specific file `src/vs/base/node/process.ts` is not present or implied."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions adding `Platform.HarmonyNext` to `platform.ts`, but it does not mention any change to the `WindowType` interface in `src/vs/workbench/electron-sandbox/window.ts`. The specific constant `HARMONY_PC` is not present or implied strongly enough to recover from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions terminal fixes, shell spawning, and a `build:harmony` script in `package.json`, but it does not mention an `'Invalid PTY pipe'` error or identify which package was reconfigured in the root `package.json`. The specific package name `node-pty` is not stated or strongly implied."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions file watcher changes and a `watcherDelay` adjustment from `500ms` to `750ms`, but it does not mention any recommended polling interval in `src/vs/platform/files/common/watcher.ts`. Since `2000ms` is not stated or strongly implied, the expected answer cannot be determined from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history notes that `extensionHostProcess.ts` was changed to increase heap size, but it does not state the specific launch argument or its value. Since the exact flag `--max-old-space-size=4096` is not present or strongly implied, the detail cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \"Just the 'vscode-ripgrep' integration. It uses a binary that needs to be updated for the new architecture.\" That directly identifies the tool replaced for search functionality. The expected answer matches exactly."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the `watcherDelay` in `configurationDefaults.ts` was changed from `500ms` to `750ms`. That directly matches the expected answer, so the detail is retained clearly enough to answer the question."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions changes to `platform.ts`, including adding `Platform.HarmonyNext`, but it does not mention any assistant suggestion to introduce a constant named `isHarmony`. Since that specific detail is absent, the expected answer cannot be recovered from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several Harmony-related platform changes, including `platform.ts`, IPC socket hashing, file watchers, telemetry, and terminal behavior. It does not mention a workaround tied to `process.platform` returning `'linux'`, nor does it reference `src/vs/base/node/process.ts`, so the expected answer cannot be derived from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions that `src/vs/workbench/electron-sandbox/window.ts` was modified for HarmonyOS Next window integration, but it never states which constant was added to the `WindowType` interface. The expected detail `HARMONY_PC` is not present or strongly implied."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions `package.json` only for the `build:harmony` script and discusses terminal/IPC behavior in general, but it never identifies a specific PTY-related package. Since `node-pty` is not stated or strongly implied, the expected answer cannot be recovered from this summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions forcing polling mode for Harmony and later adjusting `watcherDelay` from `500ms` to `750ms`, but it does not mention `src/vs/platform/files/common/watcher.ts` or a recommended polling interval of `2000ms`. Because that specific detail is absent, the expected answer cannot be derived from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses `extensionHostProcess.ts` startup, IPC behavior, reconnection, and platform-flag handling, but it never mentions any launch-argument change for a memory limit. The specific flag `--max-old-space-size=4096` cannot be inferred from the summary."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says: \"Just the 'vscode-ripgrep' integration. It uses a binary that needs to be updated for the new architecture.\" That directly identifies the tool replaced for search functionality. The expected answer matches exactly."
+  },
+  {
+    "conversation_id": "microsoft-vscode-249326",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states that the `watcherDelay` in `configurationDefaults.ts` was changed from `500ms` to `750ms` to stabilize initialization time. That directly matches the expected answer."
+  }
+]

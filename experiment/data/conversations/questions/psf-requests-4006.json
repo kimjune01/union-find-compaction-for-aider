@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "psf-requests-4006",
+    "question": "What is the specific NameError mentioned in the initial issue #4006?",
+    "expected_answer": "name 'platform_system' is not defined",
+    "category": "error_message",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "psf-requests-4006",
+    "question": "Which file did the user check to see how the extras are currently defined?",
+    "expected_answer": "setup.py",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "psf-requests-4006",
+    "question": "Which pip version did the assistant suggest using to verify the fix for the NameError?",
+    "expected_answer": "6.1.1",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "psf-requests-4006",
+    "question": "Which file was updated to include a note about the fix for legacy pip versions?",
+    "expected_answer": "CHANGELOG.md",
+    "category": "filename",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "psf-requests-4006",
+    "question": "What test runner was used to verify the build environment remains stable across multiple Python versions?",
+    "expected_answer": "tox",
+    "category": "test_case",
+    "region": "late"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "psf-requests-4006",
+    "question": "What minimal pip version was defined in the README as the baseline requirement?",
+    "expected_answer": "8.1.2",
+    "category": "configuration",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "psf-requests-4006",
+    "question": "Which class method in 'requests/adapters.py' was identified as the location of test failures in issue #4012?",
+    "expected_answer": "HTTPAdapter.get_connection",
+    "category": "function_name",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "psf-requests-4006",
+    "question": "What synchronization primitive was used to stabilize pool management in 'requests/adapters.py'?",
+    "expected_answer": "threading.Lock",
+    "category": "decision",
+    "region": "late"
+  }
+]

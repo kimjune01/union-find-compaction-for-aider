@@ -1,0 +1,66 @@
+[
+  {
+    "id": "q1",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "Which file in the resources/app folder was identified as identical to the VS Code structure?",
+    "expected_answer": "main.js",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q2",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "What is the name of the product metadata file in the root directory that most repackaged IDEs modify?",
+    "expected_answer": "product.json",
+    "category": "filename",
+    "region": "early"
+  },
+  {
+    "id": "q3",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "Which module was identified as the cause of the stack overflow when handling window.reload events?",
+    "expected_answer": "ipcMain",
+    "category": "function_name",
+    "region": "mid"
+  },
+  {
+    "id": "q4",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "Which test file must be used to verify changes to the ipc.ts file?",
+    "expected_answer": "test/electron-browser/ipc.test.ts",
+    "category": "test_case",
+    "region": "mid"
+  },
+  {
+    "id": "q5",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "What is the maximum number of retries set in telemetryAppender.ts before the patch?",
+    "expected_answer": "3",
+    "category": "configuration",
+    "region": "mid"
+  },
+  {
+    "id": "q6",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "What specific error type is exported from lifecycle.ts to help debug extension registration failures?",
+    "expected_answer": "LifecycleStateError",
+    "category": "error_message",
+    "region": "late"
+  },
+  {
+    "id": "q7",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "Which file contains the whitelist of allowed domains for telemetry?",
+    "expected_answer": "src/vs/platform/telemetry/common/telemetryUtils.ts",
+    "category": "filename",
+    "region": "late"
+  },
+  {
+    "id": "q8",
+    "conversation_id": "microsoft-vscode-191229",
+    "question": "Which configuration registry file was updated to make the telemetry URL an application-scoped setting?",
+    "expected_answer": "configurationRegistry.ts",
+    "category": "filename",
+    "region": "late"
+  }
+]

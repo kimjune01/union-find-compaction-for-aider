@@ -1,0 +1,114 @@
+[
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q1",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions glossary filenames as `docs/zh/GLOSSARY.md` and later `docs/zh/glossary.md`. `CONTRIBUTING.md` appears only as a separate file to update for contributor guidance, not as the recommended glossary filename in the root directory."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q2",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on translation work, dependency caching, PR workflow, and glossary terminology. It does not mention admonition rendering issues or any Markdown configuration extension, so the expected answer cannot be recovered from it."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q3",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions several translation choices such as \"\u4f5c\u7528\u57df\", \"\u4f9d\u8d56\u6ce8\u5165\", and glossary terms like \"\u4e2d\u95f4\u4ef6\" and \"\u7aef\u70b9\", but it never mentions \"asynchronous context manager.\" There is no direct or implied evidence for the specific Chinese term expected."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q4",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions running `flake8` and `black`, and discusses translation/PR workflow, but it never names a markdown lint command. There is no direct or implied reference to `npm run lint:md`."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q5",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions adding the glossary term \"Middleware\" (\u4e2d\u95f4\u4ef6), but it never mentions the specific FastAPI feature `WebSocketMiddleware` or how that exact term should be translated. Since the expected answer requires that precise detail, it cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q6",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history discusses translation terminology, dependency resolution, caching `inspect.signature`, tests, and PR workflow. It never mentions raising an `HTTPException` for a missing mandatory dependency or any associated status code, so the expected answer cannot be derived from it."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q7",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions work in `fastapi/dependencies/utils.py`, including caching in `get_dependency_definition`, but it never states that `get_parameter_sub_dependency` was the function modified for the dependency resolution fix. Since the specific function in the expected answer is absent, the detail cannot be determined from the summary."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q8",
+    "system": "union_find",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history does not mention any markdown linting tool. It references `flake8` and `black` for Python formatting, but nothing about markdown linting or `markdownlint` specifically."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q1",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions glossary files under `docs/zh/` (`docs/zh/GLOSSARY.md` and `docs/zh/glossary.md`) and separately mentions `CONTRIBUTING.md` for contributor guidance. It does not state that the recommended filename for a glossary in the root directory is `CONTRIBUTING.md`, so the expected answer is not supported."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q2",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history focuses on FastAPI translation work, dependency-resolution changes, tests, caching, and PR workflow. It does not mention any MkDocs or Markdown configuration extension for admonition rendering, so the expected detail cannot be recovered from it."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q3",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions prior FastAPI documentation translation work and some terminology decisions, but it does not mention the term \"asynchronous context manager\" or its Chinese translation. There is no specific detail that would let us determine the expected answer from this summary alone."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q4",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly lists the validation commands discussed for documentation work, including `npm run lint:md`, `scripts/lint.sh`, and `scripts/docs.py`. Since the question asks which command is used to lint markdown files, the expected answer is directly present."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q5",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions general terminology guidance like translating \u201cFastAPI features\u201d as \u201c\u7279\u6027\u201d and standardizing some Chinese docs terms, but it never mentions `WebSocketMiddleware` specifically. There is no direct or implied evidence that the recommended translation was to keep it as `WebSocketMiddleware`."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q6",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly states: \"Ensure you raise a clear HTTPException with a status code of 422\" for this case. That directly matches the expected answer about a missing mandatory dependency."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q7",
+    "system": "recursive",
+    "verdict": "CORRECT",
+    "judge_reasoning": "The compressed history explicitly says the user planned to implement a guard clause in `get_parameter_sub_dependency` and later discusses broadening the check in that same function. That is enough to identify the function modified in `fastapi/dependencies/utils.py` for the dependency-resolution fix."
+  },
+  {
+    "conversation_id": "tiangolo-fastapi-1228",
+    "question_id": "q8",
+    "system": "recursive",
+    "verdict": "INCORRECT",
+    "judge_reasoning": "The compressed history mentions markdown validation commands like `npm run lint:md`, `scripts/lint.sh`, and `scripts/docs.py`, but it never names the actual markdown linting library. Inferring `markdownlint` from the npm script name would be too speculative under the strict standard here."
+  }
+]
