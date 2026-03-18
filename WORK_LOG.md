@@ -272,6 +272,29 @@ What does NOT survive into done_messages: provenance, expandability, searchabili
 
 5. **Stale detection gap on equal-length replacement (MEDIUM)** — ACKNOWLEDGED with mitigation analysis. `_fed_count > len(messages)` only detects shrinkage. Equal-length replacement is narrow: aider only modifies `done_messages` by appending or replacing with summary. `summarize_all()` during `Coder.create()` typically reconstructs the summarizer. Outer `summarize_end()` stale check provides a safety net. Content hash comparison documented as the fix if this proves insufficient.
 
+### Simplification
+
+Cut design docs from 5,195 → 1,408 words (73%):
+- DESIGN_DECISIONS: 15 decisions → 3 real ones + defaults table. 12 were "do the obvious thing."
+- systems-comparison: cut narrative sections that restated the tables
+- transformation-design: cut prose that restated the code
+
+### Codex Review #3 + Fixes
+
+**Reviewer:** GPT-5.4 via codex (third pass, post-simplification)
+
+**5 issues identified:**
+
+1. **Compression hole (HIGH)** — FIXED. <27 large messages can exceed `max_tokens` but nothing graduates to cold forest. The `else` branch returned `messages` unchanged. Changed to `return super().summarize(messages, depth)` — falls back to recursive instead of doing nothing.
+
+2. **hot_count vs system messages (MEDIUM)** — NOTED. `hot_count` comes from context window (user/assistant only) but `messages[-hot_count:]` slices from raw list. In practice `done_messages` contains only user/assistant messages (populated from conversation turns). Documented assumption.
+
+3. **Document drift (MEDIUM)** — FIXED. "No changes to stale-safety" → "No changes to the external threading contract." Clarified "~10 summaries" means ~10 cluster summaries joined into 1 output message. "Semantic similarity" → "lexical similarity (TF-IDF)."
+
+4. **Unsupported claims (MEDIUM)** — FIXED. Added "(not validated on aider)" to 0.79x token claim.
+
+5. **Missing impl details (MEDIUM)** — DEFERRED to TDD phase. Render ordering, failure behavior, exact prompt text, thread safety — these belong in the code, not the spec.
+
 ### Phase 2 Complete
 
 **Working directory contents:**
@@ -281,6 +304,6 @@ current-system-prose.md       — Prose + constraints
 current-system-verification.md — Verification audit
 systems-comparison.md         — Recursive vs union-find
 transformation-design.md      — Full Python spec
-DESIGN_DECISIONS.md           — 15 decisions with rationale
+DESIGN_DECISIONS.md           — 3 decisions + defaults table
 WORK_LOG.md                   — This file
 ```

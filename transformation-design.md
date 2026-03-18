@@ -138,7 +138,9 @@ class ChatSummaryUF(ChatSummary):
                 *hot_messages,
             ]
         else:
-            return messages
+            # Not enough messages to form cold clusters (e.g., <27 large messages).
+            # Fall back to recursive — don't return unchanged.
+            return super().summarize(messages, depth)
 
         # Budget safety: must fit max_tokens AND be smaller than input
         result_tokens = sum(self.token_count(m) for m in result)
@@ -183,4 +185,4 @@ else:
 
 **ClusterSummarizer:** calls model API, cascades on failure, raises ValueError if all fail.
 
-**ChatSummaryUF:** subclass of ChatSummary, output is valid message list ending with assistant, output fits budget, falls back to recursive on inflation, incremental feeding works, stale detection rebuilds on shrinkage.
+**ChatSummaryUF:** subclass of ChatSummary, output is valid message list ending with assistant, output fits budget, falls back to recursive on inflation, falls back to recursive when <27 large messages exceed budget (no cold clusters), incremental feeding works, stale detection rebuilds on shrinkage.
