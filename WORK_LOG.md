@@ -425,6 +425,22 @@ Our fixes already on codex's branch (inherited from PR 1):
 
 Depends on PR 1 (#4940). PR body explains the two-PR strategy: PR 1 is the backend (risky, evaluable independently), PR 2 is the UX surface (straightforward, builds on merged foundation).
 
-Both PRs are now open:
+Both PRs are now drafts:
 - **PR 1 (foundation):** https://github.com/Aider-AI/aider/pull/4940 — `feat/topics-command`
 - **PR 2 (commands):** https://github.com/Aider-AI/aider/pull/4941 — `feat/topics-codex-impl`
+
+### Step 20: Control-Loop Bug (Force Graduation)
+
+**Bug:** Union-find path was unreachable in real usage. `too_big()` fires on token count (~10-15 messages), but `graduate_at=26` means 26 user/assistant messages must be fed before any graduate from hot to cold. Token budget fires first, no cold clusters exist, falls back to recursive every time. The feature literally could not trigger.
+
+**Discovery:** Manual testing with `--max-chat-history-tokens 512` and `--max-chat-history-tokens 1024`. `/topics` always showed "No topics yet" regardless of conversation length. Confirmed with `--verbose` — "Starting to summarize" never appeared in logs.
+
+**Root cause (codex diagnosis):** "This is a control-loop bug, not a tuning bug. The system decides 'start compressing' based on tokens, but decides 'what is compressible' based on message count. Those two thresholds are independent."
+
+**Why tests missed it:** Tests bypassed `too_big()` by feeding messages directly into ContextWindow or using word-count mocks with low `max_tokens`. They tested the machinery, not the control loop. The integration smoke test (`test_smoke_uf.py`) also used mocks that sidestepped the real tokenizer.
+
+**Fix (`b62b032b`):** Added `force_graduate(keep_hot)` to ContextWindow. In `summarize()`, when `too_big` fires but `cold_count == 0` and `hot_count > 4`, force-graduate the oldest half of the hot zone before rendering. This breaks the deadlock: clusters form, `resolve_dirty()` summarizes them, `render()` produces structured output.
+
+**Sonnet side-quest:** During manual testing, Sonnet (via aider) flagged 8 issues in the code and applied "fixes" that broke the TF-IDF embedder (`log((1+1)/(1+1)) = 0` → empty vectors). Reverted. Lesson: Sonnet is bad at reviewing code it's seeing for the first time. Codex is better as reviewer.
+
+**Lesson:** Integration tests with real tokenizers would have caught this. Mock-based tests proved the machinery works but missed the control-loop interaction. Need an end-to-end test that uses the real model tokenizer and verifies cold clusters actually form.
