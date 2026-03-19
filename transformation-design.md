@@ -1,67 +1,83 @@
-# Transformation Design: Union-Find Context Compaction for Aider
+# Transformation Design: Union-Find Chat History for Aider
 
-Parameters are starting points from gemini-cli v2. Tuning expected during experiment phase.
+## Why
 
-## Target Architecture
+Users who build up long chat sessions have one escape valve: `/clear`. It wipes everything. There's no way to see what the model remembers, no way to drop one stale topic without losing the rest.
 
+This isn't speculation. Issue research on `paul-gauthier/aider` (~73 issues, 235+ comments) surfaced the same gap from multiple angles:
+
+- **#3607** (selective history control) — "I want to drop the debugging context but keep the refactor decisions"
+- **#2219** (see/edit context) — "I want to see what the model's context actually contains"
+- **#948** (token breakdown with actions) — "show me what's consuming tokens and let me act on it"
+- **#4079** (cross-session persistence) — "topics should survive across sessions"
+
+The current summarizer can't support this. It produces a single text blob: "I spoke to you previously about a number of things..." No internal boundaries, no topic markers, no structure to inspect or remove. You'd have to re-parse the summary to guess at topics, which is fragile and circular.
+
+Union-find compaction maintains topic clusters as a byproduct of compression. Each cluster has its own summary. The experiment (17 conversations, 136 paired observations, McNemar p=0.248) established that switching backends doesn't degrade quality. The value proposition is not "better summaries" — it's "structured context enables visibility and selective control."
+
+## Delivery: Two PRs
+
+**PR 1 — Foundation (this design doc's primary scope):** Port 4 modules, add `--chat-history-summarizer union-find` flag, construction conditional. No new commands, no new UX. Pitch: opt-in alternative backend, quality-equivalent, default unchanged.
+
+**PR 2 — Feature (follow-up after PR 1 merges):** `/topics` and `/drop-topic` commands. Builds on the structured representation PR 1 provides.
+
+---
+
+# PR 1: Foundation
+
+## What Exists
+
+Four modules, 145 tests, all passing.
+
+### `src/context_window.py` — Forest + ContextWindow
+
+**Forest** — dict-based union-find cluster store.
+
+```python
+class Forest:
+    def __init__(self, summarizer):
+        self._parent = {}        # node_id → parent_id
+        self._content = {}       # node_id → raw content
+        self._embedding = {}     # node_id → embedding vector
+        self._summary = {}       # root_id → cached summary
+        self._dirty = set()      # dirty root ids
+        self._dirty_inputs = {}  # root_id → texts to summarize
+        self._children = {}      # root_id → set of child ids
+        self._root_order = []    # insertion-order tracking
+
+    def insert(msg_id, content, embedding)   # create singleton
+    def union(id_a, id_b)                    # synchronous merge, weighted centroid
+    def resolve_dirty()                       # one summarizer call per dirty root
+    def compact(node_id)                      # cached summary or raw content
+    def nearest_root(embedding)               # closest cluster by cosine
+    def roots()                               # all current root ids, insertion order
+    def cluster_count()                       # len(roots())
 ```
-append(msg)       <1ms   Synchronous. TF-IDF embed, push to hot, graduate if overflow.
-render()          <1ms   Synchronous. Cached cluster summaries + hot zone verbatim.
-resolveDirty()    ~4s    Batch-summarize dirty clusters. Blocks in worker thread.
-```
-
-## Integration
-
-```
-summarize_start()
-  → Thread(target=summarize_worker)
-      → ChatSummaryUF.summarize():
-          1. Feed messages into context_window.append()
-          2. context_window.resolve_dirty()   ← blocking LLM work
-          3. context_window.render()           ← uses fresh summaries
-          4. Format as aider messages, return
-  → User types next message (concurrent)
-  → summarize_end()
-      → thread.join()
-      → if not stale: done_messages = result
-```
-
-Existing `summarize_start/worker/end` lifecycle unchanged.
-
-## New Files
-
-### `src/context_window.py`
-
-Port from gemini-cli's `contextWindow.ts`.
-
-**Forest** — dict of clusters, each with summary, centroid, children, dirty inputs.
-
-Key methods:
-- `insert(msg_id, content, embedding)` — create singleton
-- `union(id_a, id_b)` — synchronous structural merge, marks dirty, no LLM
-- `resolve_dirty()` — one summarizer call per dirty root
-- `compact(root_id)` — cached summary or raw content
-- `nearest_root(embedding)` — closest cluster by cosine similarity
-
-Union collects dirty inputs from both sides (previous summary or raw content), so resolve never re-reads all historical members.
 
 **ContextWindow** — hot zone + cold forest.
 
-- `append(content)` — embed, push to hot, graduate overflow, evict overflow
-- `render()` — cold summaries + hot contents
-- `resolve_dirty()` — delegates to forest
+```python
+class ContextWindow:
+    def __init__(self, embedder, summarizer,
+                 graduate_at=26, evict_at=30,
+                 max_cold_clusters=10, merge_threshold=0.15):
 
-Graduation: when `len(hot) - graduated_index > 26`, oldest graduates to forest. Merges with nearest cluster if cosine >= 0.15. Force-merges closest pair if cluster count > 10.
+    def append(content)       # embed, push to hot, graduate/evict
+    def render()              # cold summaries + hot contents
+    def resolve_dirty()       # delegate to forest
+    hot_count                 # messages not yet graduated
+    cold_count                # cluster count
+```
 
-Eviction: when `len(hot) > 30`, oldest evicted. Overlap window of ~4 messages gives `resolveDirty()` time to run.
+Graduation: when `len(hot) - graduated_index > graduate_at`, oldest graduates to forest. Merges with nearest cluster if cosine >= 0.15. Force-merges closest pair if cluster count > 10.
 
-### `src/embedding_service.py`
+Eviction: when hot exceeds `evict_at`, oldest evicted. Overlap window (~4 messages) gives `resolve_dirty()` time to run.
 
-**TFIDFEmbedder** — incremental TF-IDF, pure Python, no dependencies.
+### `src/embedding_service.py` — TFIDFEmbedder
 
-`embed(text)` → sparse float vector. Tokenize (lowercase, split on non-alphanumeric, filter stopwords), compute TF-IDF. Vocabulary grows incrementally.
+Pure Python, no dependencies. `embed(text)` → sparse float vector. Tokenize (lowercase, split, filter stopwords), compute TF-IDF. Vocabulary grows incrementally.
 
-### `src/cluster_summarizer.py`
+### `src/cluster_summarizer.py` — ClusterSummarizer
 
 ```python
 class ClusterSummarizer:
@@ -69,24 +85,14 @@ class ClusterSummarizer:
         self.models = models if isinstance(models, list) else [models]
 
     def summarize(self, texts):
-        content = "\n\n---\n\n".join(texts)
-        messages = [
-            {"role": "system", "content": CLUSTER_SUMMARIZE_PROMPT},
-            {"role": "user", "content": content},
-        ]
-        for model in self.models:
-            try:
-                result = model.simple_send_with_retries(messages)
-                if result is not None:
-                    return result
-            except Exception:
-                continue
-        raise ValueError("cluster summarizer unexpectedly failed for all models")
+        # model cascade: try weak_model first, fallback to main_model
+        # prompt: summarize fragments, preserve filenames/functions/errors
+        # first-person user voice, no code blocks
 ```
 
-Prompt: summarize fragments, integrate previous summary, preserve file paths / function names / error messages, first-person user voice, no code blocks.
+### `src/chat_summary_uf.py` — ChatSummaryUF(ChatSummary)
 
-### `src/chat_summary_uf.py`
+Drop-in subclass. Fits inside `summarize_start/worker/end` lifecycle unchanged.
 
 ```python
 class ChatSummaryUF(ChatSummary):
@@ -95,94 +101,390 @@ class ChatSummaryUF(ChatSummary):
         self._fed_count = 0
         self._init_context_window()
 
-    def _init_context_window(self):
-        self.context_window = ContextWindow(
-            embedder=TFIDFEmbedder(),
-            summarizer=ClusterSummarizer(self.models),
-            graduate_at=26, evict_at=30,
-            max_cold_clusters=10, merge_threshold=0.15,
-        )
-        self._fed_count = 0
-
     def summarize(self, messages, depth=0):
-        if not self.too_big(messages):
-            return messages
-
-        # Stale detection: messages shrank → previous result applied → rebuild
-        if self._fed_count > len(messages):
-            self._init_context_window()
-
-        # Feed only new user/assistant messages
-        for msg in messages[self._fed_count:]:
-            role = msg.get("role", "").upper()
-            if role not in ("USER", "ASSISTANT"):
-                continue
-            content = msg.get("content", "")
-            if content:
-                self.context_window.append(f"# {role}\n{content}")
-        self._fed_count = len(messages)
-
-        # Resolve dirty clusters, then render fresh summaries
-        self.context_window.resolve_dirty()
-        rendered = self.context_window.render()
-
-        # Format output
-        hot_count = self.context_window.hot_count
-        if hot_count > 0 and hot_count < len(rendered):
-            cold_parts = rendered[:-hot_count]
-            summary_text = prompts.summary_prefix + "\n\n".join(cold_parts)
-            hot_messages = messages[-hot_count:]
-            result = [
-                {"role": "user", "content": summary_text},
-                {"role": "assistant", "content": "Ok."},
-                *hot_messages,
-            ]
-        else:
-            # Not enough messages to form cold clusters (e.g., <27 large messages).
-            # Fall back to recursive — don't return unchanged.
-            return super().summarize(messages, depth)
-
-        # Budget safety: must fit max_tokens AND be smaller than input
-        result_tokens = sum(self.token_count(m) for m in result)
-        if result_tokens > self.max_tokens:
-            return super().summarize(messages, depth)
-        input_tokens = sum(self.token_count(m) for m in messages)
-        if result_tokens >= input_tokens:
-            return super().summarize(messages, depth)
-
-        if result and result[-1]["role"] != "assistant":
-            result.append({"role": "assistant", "content": "Ok."})
-        return result
-
-    def summarize_all(self, messages):
-        return super().summarize_all(messages)
+        # 1. Skip if not too_big
+        # 2. Stale detection: if _fed_count > len(messages), rebuild
+        # 3. Feed only new user/assistant messages
+        # 4. resolve_dirty() — blocking LLM work
+        # 5. render() — uses fresh summaries
+        # 6. Format: [summary_msg, "Ok.", *hot_messages]
+        # 7. Budget safety: fallback to recursive if inflated
 ```
 
-## Construction Site
+### Construction site
 
 ```python
-# args.py
+# aider/args.py
 parser.add_argument(
     "--chat-history-summarizer",
     default="recursive",
     choices=["recursive", "union-find"],
 )
 
-# main.py
+# aider/main.py
 if getattr(args, 'chat_history_summarizer', None) == 'union-find':
     summarizer = ChatSummaryUF(models, max_tokens)
 else:
     summarizer = ChatSummary(models, max_tokens)
 ```
 
-## Tests
+## PR 1 Changes to Foundation Code
 
-**Forest:** insert creates singleton, union is synchronous (no summarizer call), resolve_dirty calls summarizer per dirty root, compact returns cached summary, nearest returns by cosine similarity.
+Two fixes applied before porting. Both are backend correctness, not UX.
 
-**ContextWindow:** append graduates/evicts at thresholds, render returns cold + hot, resolve_dirty delegates to forest.
+### 1. Stable root ordering
 
-**TFIDFEmbedder:** same text → same vector, different texts → different vectors, cosine similarity works.
+**Problem:** `roots()` returns `list(set(...))` — nondeterministic. Downstream operations (rendering, future `/topics` numbering) depend on deterministic ordering.
 
-**ClusterSummarizer:** calls model API, cascades on failure, raises ValueError if all fail.
+**Fix:** Add `_root_order` list to Forest. Track insertion order. `roots()` returns roots in the order their first member was inserted.
 
-**ChatSummaryUF:** subclass of ChatSummary, output is valid message list ending with assistant, output fits budget, falls back to recursive on inflation, falls back to recursive when <27 large messages exceed budget (no cold clusters), incremental feeding works, stale detection rebuilds on shrinkage.
+```python
+class Forest:
+    def __init__(self, summarizer):
+        # ... existing fields ...
+        self._root_order = []    # insertion-order tracking
+
+    def insert(self, msg_id, content, embedding):
+        # ... existing logic ...
+        self._root_order.append(msg_id)
+
+    def union(self, id_a, id_b):
+        root_a = self._find(id_a)
+        root_b = self._find(id_b)
+        if root_a == root_b:
+            return root_a
+
+        # ... existing merge logic ...
+
+        # Update root order: remove old_root, keep new_root's position
+        if old_root in self._root_order:
+            self._root_order.remove(old_root)
+
+        return new_root
+
+    def roots(self):
+        """Return roots in stable insertion order."""
+        seen = set()
+        ordered = []
+        for node_id in self._root_order:
+            root = self._find(node_id)
+            if root not in seen:
+                seen.add(root)
+                ordered.append(root)
+        return ordered
+```
+
+### 2. Weighted centroid averaging
+
+**Problem:** `union()` averages centroids with equal weight. A 1-message cluster pulls a 50-message cluster's centroid halfway. Over repeated merges, this distorts cluster identity.
+
+**Fix:** Weight by cluster size.
+
+```python
+def union(self, id_a, id_b):
+    # ... after determining new_root, old_root ...
+
+    size_new = len(self._children.get(new_root, set()))
+    size_old = len(self._children.get(old_root, set()))
+    total = size_new + size_old
+
+    emb_a = self._embedding.get(new_root, {})
+    emb_b = self._embedding.get(old_root, {})
+    if emb_a and emb_b:
+        if isinstance(emb_a, dict) and isinstance(emb_b, dict):
+            all_keys = set(emb_a.keys()) | set(emb_b.keys())
+            self._embedding[new_root] = {
+                k: (emb_a.get(k, 0.0) * size_new + emb_b.get(k, 0.0) * size_old) / total
+                for k in all_keys
+            }
+        else:
+            self._embedding[new_root] = [
+                (a * size_new + b * size_old) / total
+                for a, b in zip(emb_a, emb_b)
+            ]
+```
+
+**Note:** `size_new` and `size_old` are computed before the `_children` merge, so they reflect pre-merge sizes.
+
+## PR 1 Test Plan
+
+| Area | What's tested |
+|------|---------------|
+| Flag selection | `--chat-history-summarizer union-find` constructs `ChatSummaryUF`; default constructs `ChatSummary` |
+| Default unchanged | No code path changes when flag is absent or `recursive` |
+| Output format | `summarize()` returns `[summary_msg, "Ok.", *hot_messages]` matching recursive |
+| Fallback to recursive | Result exceeding `max_tokens` triggers `super().summarize()`; result >= input tokens triggers fallback |
+| `summarize_all()` parity | Delegates to `super().summarize_all()`, same result as recursive |
+| Stale discard + rebuild | When `done_messages` changes during summarization, result discarded; next call rebuilds forest via `_fed_count` |
+| Low token budget | `max_chat_history_tokens=1024` with 10 clusters triggers fallback gracefully |
+| Weighted centroid | Merging unequal clusters weights toward larger; equal-size merge at midpoint |
+| Stable root ordering | Roots in insertion order after inserts; order preserved after merges; deterministic across calls |
+| Cluster summarization | Model cascade (weak first, fallback to main), same `simple_send_with_retries()` |
+| Incremental feeding | `_fed_count` feeds only new messages; shrink triggers rebuild |
+| Forest mechanics | Insert, union, roots, compact, cluster_count — existing 145 tests |
+
+## Aider Integration Points (PR 1)
+
+| File | Change | Lines |
+|------|--------|-------|
+| `aider/args.py` | Add `--chat-history-summarizer` argument | ~5 |
+| `aider/main.py` | Conditional at summarizer construction | ~4 |
+| `aider/context_window.py` | New file (ported from src/) | ~340 |
+| `aider/embedding_service.py` | New file (ported from src/) | ~80 |
+| `aider/cluster_summarizer.py` | New file (ported from src/) | ~60 |
+| `aider/chat_summary_uf.py` | New file (ported from src/) | ~90 |
+
+Imports change from standalone (`from context_window import ...`) to aider-internal (`from aider.context_window import ...`).
+
+## What Doesn't Change (PR 1)
+
+- Default summarization (recursive, unchanged)
+- Threading model (`summarize_start/worker/end`)
+- Output format (`[summary_msg, "Ok.", *hot_messages]`)
+- `summarize_all()` behavior
+- Existing commands (`/clear`, `/drop`, `/tokens`, `/reset`)
+- Existing tests (no modifications)
+
+---
+
+# PR 2: `/topics` and `/drop-topic`
+
+_Depends on PR 1 being merged. Everything below builds on the foundation._
+
+## Source of Truth
+
+`done_messages` is aider's source of truth — it's what gets sent to the model. The forest is a shadow structure that provides topic visibility and selective drop. Both are updated in lockstep:
+
+- `summarize()` feeds messages into forest, renders, writes result to `done_messages` (existing flow)
+- `/drop-topic` removes from forest, re-renders, writes result to `done_messages` (same pattern as `/clear`)
+- `/topics` reads from forest (read-only)
+
+The forest is rebuilt after every successful summarization. When `summarize_end()` swaps in the result, `done_messages` shrinks. Next `summarize()` call sees `_fed_count > len(messages)` → full rebuild. The forest is a session-scoped cache, not a persistent store. Topics are session-scoped.
+
+## PR 2 Changes
+
+### 1. `remove_cluster(root_id)` — new Forest method
+
+Removes a root and all its children from every data structure.
+
+```python
+def remove_cluster(self, root_id):
+    """Remove a cluster by root id. Returns list of removed node ids."""
+    root = self._find(root_id)
+    members = list(self._children.get(root, {root}))
+
+    for node_id in members:
+        self._parent.pop(node_id, None)
+        self._content.pop(node_id, None)
+        self._embedding.pop(node_id, None)
+
+    self._summary.pop(root, None)
+    self._dirty.discard(root)
+    self._dirty_inputs.pop(root, None)
+    self._children.pop(root, None)
+
+    # Update root order
+    self._root_order = [r for r in self._root_order if r not in members]
+
+    return members
+```
+
+~15 lines. Returns removed node IDs for confirmation messaging.
+
+### 2. `cmd_topics(self, args)` — in `aider/commands.py`
+
+```python
+def cmd_topics(self, args):
+    """Show topic clusters in compressed chat history."""
+    summarizer = self.coder.summarizer
+    if not isinstance(summarizer, ChatSummaryUF):
+        self.io.tool_output(
+            "Topic view requires --chat-history-summarizer union-find."
+        )
+        return
+
+    # Threading guard — forest reads can race with background summarizer
+    if self.coder.summarizer_thread is not None:
+        self.io.tool_output(
+            "Summarization is running. Try again in a moment."
+        )
+        return
+
+    cw = summarizer.context_window
+    forest = cw._forest
+    roots = forest.roots()
+
+    if not roots:
+        self.io.tool_output("No topics yet (history not compressed).")
+        return
+
+    self.io.tool_output("\nChat history topics:\n")
+    for i, root in enumerate(roots, 1):
+        summary = forest.compact(root)
+        tokens = summarizer.token_count({"role": "user", "content": summary})
+        # First line of summary, truncated
+        preview = summary.split("\n")[0][:80]
+        self.io.tool_output(f"  {i}. {tokens:>5} tokens — \"{preview}\"")
+
+    hot = cw.hot_count
+    if hot > 0:
+        hot_msgs = cw._hot[cw._graduated_index:]
+        hot_tokens = sum(
+            summarizer.token_count({"role": "user", "content": c})
+            for c, _e in hot_msgs
+        )
+        self.io.tool_output(f"  + {hot_tokens} tokens — {hot} recent messages (not yet compressed)")
+
+    total = sum(
+        summarizer.token_count({"role": "user", "content": forest.compact(r)})
+        for r in roots
+    )
+    if hot > 0:
+        total += hot_tokens
+    self.io.tool_output(f"\nTotal: {total:,} tokens")
+```
+
+~30 lines. Accesses `self.coder.summarizer` — same pattern as existing commands that read coder state.
+
+### 3. `cmd_drop_topic(self, args)` — in `aider/commands.py`
+
+```python
+def cmd_drop_topic(self, args):
+    """Drop a topic cluster from compressed chat history."""
+    summarizer = self.coder.summarizer
+    if not isinstance(summarizer, ChatSummaryUF):
+        self.io.tool_output(
+            "Topic dropping requires --chat-history-summarizer union-find."
+        )
+        return
+
+    # Threading guard
+    if self.coder.summarizer_thread is not None:
+        self.io.tool_output(
+            "Can't drop topics while summarization is running. Try again in a moment."
+        )
+        return
+
+    try:
+        index = int(args.strip())
+    except (ValueError, AttributeError):
+        self.io.tool_error("Usage: /drop-topic N (where N is the topic number from /topics)")
+        return
+
+    cw = summarizer.context_window
+    forest = cw._forest
+    roots = forest.roots()
+
+    if index < 1 or index > len(roots):
+        self.io.tool_error(f"Invalid topic number. Use /topics to see available topics (1-{len(roots)}).")
+        return
+
+    root = roots[index - 1]
+    summary = forest.compact(root)
+    tokens = summarizer.token_count({"role": "user", "content": summary})
+
+    # 1. Remove from forest (shadow structure)
+    forest.remove_cluster(root)
+
+    # 2. Re-render and update done_messages (source of truth)
+    rendered = cw.render()
+    if rendered:
+        cold_parts = rendered[:-cw.hot_count] if cw.hot_count > 0 else rendered
+        summary_text = prompts.summary_prefix + "\n\n".join(cold_parts)
+        hot_messages = list(self.coder.done_messages[-cw.hot_count:]) if cw.hot_count > 0 else []
+        self.coder.done_messages = [
+            {"role": "user", "content": summary_text},
+            {"role": "assistant", "content": "Ok."},
+            *hot_messages,
+        ]
+    else:
+        self.coder.done_messages = []
+
+    self.io.tool_output(f"Dropped topic {index} ({tokens:,} tokens freed).")
+```
+
+~35 lines. The re-render + `done_messages` update follows the same pattern as `/clear` (which sets `done_messages = []`). The model immediately stops seeing the dropped topic.
+
+### Threading safety (PR 2)
+
+Both `/topics` and `/drop-topic` access forest state. The background summarizer also reads and writes forest state via `summarize_worker`.
+
+**Guard pattern (both commands):**
+
+1. Commands run on the main thread. `summarize_worker` runs on a background thread.
+2. Both `cmd_topics` and `cmd_drop_topic` check `self.coder.summarizer_thread is not None`. If a thread is running, refuse with "try again in a moment."
+3. `/drop-topic` additionally updates `done_messages` after the forest mutation. Since the thread guard ensures no concurrent summarization, `done_messages` is safe to write.
+4. The stale `_fed_count` naturally triggers a forest rebuild on the next `summarize()` call.
+
+**Decision:** Refuse both commands during summarization. No thread join (would block the UI). No lock (forest isn't designed for concurrent access, and the guard makes it unnecessary).
+
+### Exposing `context_window` from ChatSummaryUF
+
+`cmd_topics` and `cmd_drop_topic` need access to the `ContextWindow` instance. Add a public property:
+
+```python
+class ChatSummaryUF(ChatSummary):
+    @property
+    def context_window(self):
+        return self._context_window
+```
+
+### `/topics` with recursive summarizer
+
+**Decision:** Show a guidance message, not a degraded view. "Topic view requires --chat-history-summarizer union-find." A degraded view (token count without breakdown) would duplicate `/tokens` and confuse the mental model.
+
+### Flag name
+
+**Decision:** `--chat-history-summarizer`. Matches aider's naming convention (`--chat-history-token-limit`, `--chat-history-file`). Choices: `recursive` (default), `union-find`.
+
+## PR 2 Tests
+
+### `test_remove_cluster`
+
+- Removes root and all children from `_parent`, `_content`, `_embedding`
+- Removes from `_summary`, `_dirty`, `_dirty_inputs`, `_children`
+- Removes from `_root_order`
+- Returns list of removed node IDs
+- `cluster_count()` decreases by 1
+- Removed content doesn't appear in `render()`
+
+### `test_cmd_topics`
+
+- Shows indexed list with token counts and preview text
+- Shows hot zone count and tokens
+- Shows "No topics yet" when history empty
+- Shows guidance message when summarizer is recursive
+- Shows total token count
+- Refused when `summarizer_thread is not None`
+
+### `test_cmd_drop_topic`
+
+- Drop removes cluster from forest, frees tokens
+- Drop updates `done_messages` immediately (source of truth)
+- `done_messages` after drop does not contain the dropped topic's summary
+- Drop with invalid index shows error — `done_messages` unchanged
+- Drop with non-integer shows usage message — `done_messages` unchanged
+- Subsequent `/topics` reflects the removal
+- Drop refused when `summarizer_thread is not None` — both forest and `done_messages` unchanged
+- Drop succeeds after thread completes (set to None)
+- After drop, `done_messages = []` when all topics removed
+
+### `test_drop_topic_done_messages_sync`
+
+- Integration test: drop topic, verify `done_messages` matches `render()` output
+- After drop, next `summarize()` call triggers rebuild (`_fed_count > len(messages)`)
+- Rebuilt forest does not contain the dropped topic
+- Model prompt (assembled from `done_messages`) excludes dropped content
+
+## PR 2 Integration Points
+
+| File | Change | Lines |
+|------|--------|-------|
+| `aider/commands.py` | `cmd_topics()`, `cmd_drop_topic()` methods | ~65 |
+| `aider/context_window.py` | `remove_cluster()` method, `context_window` property | ~20 |
+
+---
+
+## Follow-up (not in either PR)
+
+- Cross-session topic persistence (#4079) — requires serializing the forest, separate PR

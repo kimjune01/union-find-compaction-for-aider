@@ -158,7 +158,7 @@ Per preregistered decision rules:
 
 The tuning policy allows 2 parameter changes before accepting the H1 result. Given only 3 discordant pairs, tuning merge threshold or max clusters is unlikely to move the needle. The signal isn't "effect too small to detect" -- it's "the systems produce nearly identical output."
 
-**Recommendation:** Do not open a PR on aider. The union-find architecture is not worth the added complexity without a recall advantage. Document the experiment, the null result, and the lessons learned.
+**Recommendation:** The recall hypothesis is closed. Union-find's value is not better summaries — it's that topic-structured context enables user-facing features (visibility, selective control) that flat recursive summarization can't support. The experiment serves as a regression check: switching backends doesn't degrade quality.
 
 ---
 
