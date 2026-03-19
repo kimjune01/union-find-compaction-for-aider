@@ -1,4 +1,8 @@
-# Add opt-in union-find chat history summarizer
+# PR 1: Add opt-in union-find chat history summarizer
+
+**Part 1 of 2.** This PR adds the backend. [Part 2](#4941) adds `/topics` and `/drop-topic` commands on top of it. Split for reviewability — together they give users selective control over chat history.
+
+**Submitted:** https://github.com/Aider-AI/aider/pull/4940
 
 ## Summary
 
@@ -8,11 +12,6 @@
 - Without the flag, this PR is a no-op. Default behavior completely unchanged
 - Benchmarked as quality-equivalent (136 paired observations, McNemar p=0.248, 1.14× cost)
 - No new dependencies (pure Python TF-IDF embedder)
-
-## Test plan
-
-- [x] 49 new tests passing (`tests/basic/test_chat_summary_uf.py`)
-- [x] 523 existing tests passing, zero regressions
 
 ## Why
 
@@ -30,90 +29,50 @@ This is the backend. User-facing commands (`/topics`, `/drop-topic`) come in a f
 
 The algorithm was [prototyped against gemini-cli](https://june.kim/union-find-compaction), where it showed a +8–18pp recall advantage over flat summarization across 7 trials (1 significant at p=0.039, rest directional). It was then ported to aider for validation against aider's stronger recursive baseline. Full experiment methodology, preregistration, and data are in the [research repo](https://github.com/kimjune01/union-find-compaction-for-aider).
 
-## What changes
+## Future paths
 
-**New files** (549 lines of production code, 689 lines of tests):
+The new code is fully contained — 4 new files, no modifications to base_coder.py, no changes to the threading model, no new state that other systems depend on. The opt-in flag keeps all three options cheap:
 
-| File | Lines | What it does |
-|------|------:|--------------|
-| `aider/context_window.py` | 328 | `Forest` (union-find cluster store with stable ordering and weighted centroids) + `ContextWindow` (hot/cold zones with graduation and eviction) |
-| `aider/embedding_service.py` | 80 | `TFIDFEmbedder` — pure Python, incremental vocabulary, no external dependencies |
-| `aider/cluster_summarizer.py` | 56 | Per-cluster summarization via existing model cascade (`simple_send_with_retries`) |
-| `aider/chat_summary_uf.py` | 85 | `ChatSummaryUF(ChatSummary)` — drop-in subclass with incremental feeding and mandatory fallback |
-| `tests/basic/test_chat_summary_uf.py` | 689 | 49 tests covering 12 areas (see table below) |
+- **Make it the default:** Change `default="recursive"` to `default="union-find"` in `args.py`. One line.
+- **Rip it out:** Delete 4 files, remove 15 lines from `args.py` + `main.py`. Five minutes.
+- **Keep as-is:** Zero maintenance. The recursive path doesn't know the union-find path exists.
 
-**Modified files** (15 lines changed):
+---
 
-| File | Change |
-|------|--------|
-| `aider/args.py` | `--chat-history-summarizer` argument (default `recursive`, choices `[recursive, union-find]`) |
-| `aider/main.py` | Conditional at summarizer construction — `ChatSummaryUF` when `union-find`, `ChatSummary` otherwise |
+# PR 2: Add /topics and /drop-topic commands
 
-## What doesn't change
+**Depends on PR 1.** Review after that PR merges.
 
-- Default summarization (recursive, unchanged)
-- Threading model (`summarize_start`/`summarize_worker`/`summarize_end`)
-- Output format (`[summary_msg, "Ok.", *hot_messages]`)
-- `summarize_all()` behavior (delegates to parent)
-- Existing commands (`/clear`, `/drop`, `/tokens`, `/reset`)
-- Existing tests (no modifications, all 523 still passing)
+**Submitted:** https://github.com/Aider-AI/aider/pull/4941
 
-## How it works
+## Summary
 
-Messages flow through a hot zone and a cold forest:
+- `/topics` — see what the model remembers, with token counts and previews
+- `/drop-topic N` — remove one stale topic without wiping everything
+- Both commands refuse during background summarization (threading guard)
+- Without `--chat-history-summarizer union-find`, both show a guidance message
 
-1. Each user/assistant message is TF-IDF-embedded and pushed to the hot zone
-2. When the hot zone exceeds `graduate_at` (26 messages), the oldest graduates to the forest
-3. Graduated messages merge with the nearest existing cluster if cosine similarity ≥ 0.15, or form a new singleton
-4. If cluster count exceeds `max_cold_clusters` (10), the closest pair is force-merged
-5. Dirty clusters (merged but not yet summarized) are summarized via the model cascade
-6. `render()` returns cold summaries + hot contents, formatted as `[summary_msg, "Ok.", *hot_messages]`
+## How /drop-topic works
 
-The overlap window (graduate_at=26, evict_at=30) gives `resolve_dirty()` time to summarize before eviction.
+`done_messages` is the source of truth. The forest is a shadow structure. `/drop-topic` updates both in lockstep:
 
-## Safety
+1. Remove the cluster from the forest
+2. Re-render cold summaries + hot contents
+3. Write the result to `self.coder.done_messages`
 
-1. **Mandatory fallback.** If the union-find result exceeds `max_tokens` or is ≥ input tokens, falls back to `super().summarize()` (recursive). Worst case, you get the current system.
-2. **Stale-safety preserved.** `summarize_end()` stale check works identically. The `_fed_count` mechanism triggers a full forest rebuild when `done_messages` changes (shrinks, is cleared, or is replaced by a previous summarization result).
-3. **Same tokenizer.** Inherits `self.token_count = self.models[0].token_count` from `ChatSummary.__init__()`.
-4. **Stable root ordering.** `roots()` returns clusters in insertion order via a tracked `_root_order` list, ensuring deterministic `render()` output across calls.
-5. **Weighted centroid averaging.** `union()` weights centroids by cluster size (`emb * size / total`), preventing small clusters from distorting large ones over repeated merges.
-6. **No new dependencies.** TF-IDF embedder is pure Python. No numpy, no scipy, no API calls.
+The model immediately stops seeing the dropped topic. On the next `summarize()` call, `_fed_count > len(messages)` triggers a full forest rebuild from the new `done_messages`.
 
-## Test coverage
+---
 
-49 tests in `tests/basic/test_chat_summary_uf.py`, organized by area:
+# Review history
 
-| Area | Tests | What's verified |
-|------|------:|-----------------|
-| Forest mechanics | 12 | Insert, union, roots, compact, nearest_root, dirty tracking, path compression, dirty input collection |
-| Stable root ordering | 4 | Insertion order preserved, order after merge, deterministic across calls, multiple merges |
-| Weighted centroid | 3 | Equal-size midpoint, unequal-size weights toward larger, sparse dict weighting |
-| Cluster summarization | 4 | First model success, fallback to second model, all fail raises ValueError, single model (not list) |
-| Flag selection | 3 | Subclass relationship, ChatSummaryUF constructs correctly, default is ChatSummary (not UF) |
-| Output format | 2 | Not-too-big returns unchanged, summary + "Ok." + hot_messages format |
-| Fallback to recursive | 2 | Result exceeds max_tokens, not enough messages for graduation |
-| `summarize_all()` parity | 1 | Delegates to parent, same output format |
-| Stale discard + rebuild | 2 | `_fed_count` shrink triggers `_init_context_window()`, incremental feeding tracks correctly |
-| Incremental feeding | 2 | Skips non-user/assistant roles, empty content not fed |
-| Low token budget | 1 | Graceful fallback without crash |
-| TF-IDF embedder | 7 | Sparse dict output, empty string, stopwords filtered, vocabulary growth, doc count, cosine similarity (high for similar, low for different) |
-| ContextWindow integration | 6 | Append/render, hot count tracking, graduation to forest, force merge, cold+hot render, dirty resolution |
+7 rounds of codex review (GPT-5.4) across both PRs. Key issues found and fixed:
 
-## Benchmark
+1. Mixed-role tail mismatch — `hot_count` mapped to wrong original messages when system/tool messages present. Fixed with `_get_fed_indices()`.
+2. `_hot` list grew without bound — graduated entries never released. Fixed with `_trim_graduated()`.
+3. `resolve_dirty()` failure crashed instead of falling back to recursive. Fixed with try/except.
+4. `evict_at` was dead code — `_maybe_graduate()` already kept hot zone bounded. Removed.
+5. Empty embedding dropped silently in `union()`. Fixed with `elif emb_b:` fallback.
+6. Unused methods (`is_dirty`, `dirty_inputs`) and dead list-vector branches. Removed.
 
-Tested on 17 real aider conversations (136 paired observation points where both backends triggered summarization):
-
-| Metric | Value |
-|--------|-------|
-| McNemar's test | p = 0.248 (no significant difference in recall) |
-| Cost ratio | 1.14× (union-find uses slightly more tokens due to per-cluster prompts) |
-| Latency overhead | Sub-millisecond (TF-IDF embedding + union-find operations; LLM calls dominate) |
-
-The union-find backend produces quality-equivalent summaries. The value is structured context: visibility into what the model remembers, and selective control over what it forgets.
-
-## Follow-up (not in this PR)
-
-- `/topics` — read-only command showing topic clusters with token counts and previews
-- `/drop-topic N` — selective topic removal with `done_messages` sync and threading guard
-- Cross-session topic persistence (#4079)
+Codex also independently implemented PR 2 from the spec (`feat/topics-codex-impl`). We compared both implementations and adopted codex's improvements: `context_window` as read-only property, `render()` reusing `hot_messages()`, simpler 2-branch re-render in `/drop-topic`, total token count in `/topics` output.
