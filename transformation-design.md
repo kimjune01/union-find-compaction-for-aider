@@ -59,7 +59,7 @@ class Forest:
 ```python
 class ContextWindow:
     def __init__(self, embedder, summarizer,
-                 graduate_at=26, evict_at=30,
+                 graduate_at=26,
                  max_cold_clusters=10, merge_threshold=0.15):
 
     def append(content)       # embed, push to hot, graduate/evict
@@ -69,7 +69,7 @@ class ContextWindow:
     cold_count                # cluster count
 ```
 
-Graduation: when `len(hot) - graduated_index > graduate_at`, oldest graduates to forest. Merges with nearest cluster if cosine >= 0.15. Force-merges closest pair if cluster count > 10.
+Graduation: token-aware. When `too_big` fires, keep only as many recent hot messages as fit in 25% of `max_tokens`. The rest graduate to forest. Merges with nearest cluster if cosine >= 0.15. Force-merges closest pair if cluster count > 10. The fixed `graduate_at=26` from gemini-cli was replaced after manual testing revealed a control-loop deadlock (see DESIGN_DECISIONS.md #16).
 
 Eviction: when hot exceeds `evict_at`, oldest evicted. Overlap window (~4 messages) gives `resolve_dirty()` time to run.
 

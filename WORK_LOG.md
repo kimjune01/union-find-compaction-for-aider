@@ -439,8 +439,29 @@ Both PRs are now drafts:
 
 **Why tests missed it:** Tests bypassed `too_big()` by feeding messages directly into ContextWindow or using word-count mocks with low `max_tokens`. They tested the machinery, not the control loop. The integration smoke test (`test_smoke_uf.py`) also used mocks that sidestepped the real tokenizer.
 
-**Fix (`b62b032b`):** Added `force_graduate(keep_hot)` to ContextWindow. In `summarize()`, when `too_big` fires but `cold_count == 0` and `hot_count > 4`, force-graduate the oldest half of the hot zone before rendering. This breaks the deadlock: clusters form, `resolve_dirty()` summarizes them, `render()` produces structured output.
+**First fix (`b62b032b`):** Added `force_graduate(keep_hot)` to ContextWindow. In `summarize()`, when `too_big` fires but `cold_count == 0` and `hot_count > 4`, force-graduate the oldest half of the hot zone before rendering.
+
+**Second bug:** Force-graduating half wasn't enough. Debug logging revealed: with 6 messages, keeping 4 hot produced a 1207-token result against a 1024 budget. The budget safety check (`result_tokens > max_tokens`) fired and fell back to recursive anyway. The hot messages alone exceeded the budget.
+
+**Real fix:** Token-aware graduation. Instead of keeping a fixed fraction hot, keep only as many recent messages as fit in 25% of `max_tokens`. Count backwards from the newest, stop when the budget fills. The rest graduate to cold and get summarized. This aligns the graduation trigger with the same token axis that `too_big` uses — codex's core insight that "the graduation trigger and summarization trigger must use the same resource model."
 
 **Sonnet side-quest:** During manual testing, Sonnet (via aider) flagged 8 issues in the code and applied "fixes" that broke the TF-IDF embedder (`log((1+1)/(1+1)) = 0` → empty vectors). Reverted. Lesson: Sonnet is bad at reviewing code it's seeing for the first time. Codex is better as reviewer.
 
-**Lesson:** Integration tests with real tokenizers would have caught this. Mock-based tests proved the machinery works but missed the control-loop interaction. Need an end-to-end test that uses the real model tokenizer and verifies cold clusters actually form.
+**Lesson:** Integration tests with real tokenizers would have caught this. Mock-based tests proved the machinery works but missed the control-loop interaction. The debug log approach (write to `/tmp/uf-debug.log` from inside `summarize()`) was essential for diagnosing the live session. Need an end-to-end test that uses the real model tokenizer and verifies cold clusters actually form.
+
+### Step 21: Token-Aware Graduation
+
+Debug logging from Step 20 revealed a second failure mode: force-graduating half the hot zone wasn't enough. With 6 messages, keeping 4 hot produced 1207 tokens against a 1024 budget. The budget safety check (`result_tokens > max_tokens`) fired and fell back to recursive.
+
+**Root cause:** Force-graduate kept a fixed fraction (half) regardless of token budget. Same control-loop misalignment — graduation decisions on message count, budget on tokens.
+
+**Fix:** Token-aware graduation. When `too_big` fires, count backwards from the newest hot message. Keep as many as fit in 25% of `max_tokens`. Graduate the rest. This aligns both triggers to the same token axis.
+
+Updated DESIGN_DECISIONS.md #16 and transformation-design.md to reflect the new graduation policy. The fixed `graduate_at=26` from gemini-cli is now a fallback threshold only; real graduation is token-driven.
+
+### Next Steps
+
+1. Verify `/topics` works in a live session with the token-aware graduation
+2. Remove debug logging from `chat_summary_uf.py` and `base_coder.py`
+3. Push fixes to both PR branches
+4. Un-draft PRs when manual testing confirms the feature works

@@ -118,11 +118,15 @@ Both `cmd_topics` and `cmd_drop_topic` check `self.coder.summarizer_thread is no
 
 These values come from gemini-cli v2, where they were validated experimentally. They transfer because the underlying mechanics (TF-IDF similarity, union-find merging, hot/cold zones) are the same.
 
-### 16. `graduate_at = 26`, `evict_at = 30`
+### 16. Token-aware graduation (replaces `graduate_at = 26`)
 
-Overlap window of 4 messages (~2 turns). Messages exist in both hot and cold for this window, giving `resolve_dirty()` time to run before eviction.
+**Original design:** Fixed `graduate_at=26` threshold from gemini-cli. `evict_at=30` overlap window.
 
-**Heuristic, not guarantee.** In gemini-cli, dirty resolution ran during the main LLM call (5-30s). In aider, it runs inside `summarize_worker` on a background thread — timing depends on user think time, which is less predictable. The overlap window is generous enough for the common case but is a tuning parameter, not an invariant. If summaries are stale at eviction, the fallback is showing raw content (safe, just verbose).
+**Problem discovered in manual testing:** Control-loop bug. `too_big()` fires on tokens (~10-15 messages at 1024 budget), but graduation requires 26 messages. Token budget fires first, no cold clusters exist, falls back to recursive every time. Union-find path was unreachable. Second attempt (force-graduate half) also failed: keeping half the messages hot still exceeded the token budget.
+
+**Current design:** Token-aware forced graduation. When `too_big` fires, keep only as many recent hot messages as fit in 25% of `max_tokens`. The rest graduate to cold. This aligns the graduation trigger with the same token axis that `too_big` uses. `evict_at` removed (dead code — `_maybe_graduate` already bounded the hot zone).
+
+**Why 25%:** Leaves 75% of the budget for cold summaries + message overhead. Cold summaries are compressed (~10-50 tokens each vs ~100-300 raw), so 75% of budget fits many more topics as summaries than as raw messages.
 
 ### 17. `max_cold_clusters = 10`
 
@@ -204,7 +208,7 @@ The forest lives in memory for the current session. On restart, `done_messages` 
 | Summary voice | First-person user | Matches `prompts.summarize` | Minimal — same convention |
 | Model cascade | `[weak_model, main_model]` | Same as `ChatSummary` | Minimal — same code path |
 | `summarize_all()` | Delegates to parent | Same behavior | Minimal — delegates to parent |
-| `graduate_at` | 26 | gemini-cli v2 | Opt-in only |
+| `graduation` | Token-aware (25% of max_tokens) | Replaced fixed `graduate_at=26` | Opt-in only |
 | `evict_at` | 30 | gemini-cli v2 | Opt-in only |
 | `max_cold_clusters` | 10 | gemini-cli v2 | Opt-in only |
 | `merge_threshold` | 0.15 | gemini-cli v2 | Opt-in only |
