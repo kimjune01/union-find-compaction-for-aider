@@ -2,10 +2,10 @@
 
 ## Summary
 
-- Adds `--chat-history-summarizer union-find` flag — opt-in alternative to the default recursive summarizer
+- Adds `--chat-history-summarizer union-find` flag, opt-in alternative to the default recursive summarizer
 - Groups messages into topic clusters by TF-IDF similarity, summarizes each cluster independently
 - Produces the same output format, uses the same model cascade, falls back to recursive if output exceeds budget
-- Default behavior completely unchanged — users who don't pass the flag get exactly the current system
+- Without the flag, this PR is a no-op. Default behavior completely unchanged
 - Benchmarked as quality-equivalent (136 paired observations, McNemar p=0.248, 1.14× cost)
 - No new dependencies (pure Python TF-IDF embedder)
 
@@ -16,17 +16,15 @@
 
 ## Why
 
-The current recursive summarizer compresses chat history into a single opaque text blob. It works well for staying within budget, but it's a one-way door: original messages are discarded, there's no provenance, and no way to selectively remove one stale topic without re-summarizing everything. Users notice this:
+The current recursive summarizer compresses chat history into a single opaque text blob. Original messages are discarded. There's no provenance, and no way to selectively remove one stale topic without re-summarizing everything.
 
 - #3607 — selective history control ("I want to drop the debugging context but keep the refactor decisions")
 - #2219 — see/edit context ("I want to see what the model's context actually contains")
 - #948 — token breakdown with actions ("show me what's consuming tokens and let me act on it")
 
-These issues share a root cause: the summarizer destroys structure. You can't inspect, search, or selectively drop topics that don't exist as addressable units.
+Union-find compaction groups messages into topic-coherent clusters and summarizes each one independently. Every summary traces back to its source messages through `find()`. Topics become addressable units you can inspect and drop.
 
-Union-find compaction groups messages into topic-coherent clusters and summarizes each one independently. Every summary traces back to its source messages. This makes structured operations possible — inspecting topics, dropping one, branching context — without changing how the rest of aider works.
-
-This PR doesn't add those operations. It adds the backend that makes them possible. User-facing commands (`/topics`, `/drop-topic`) come in a follow-up PR once the foundation is reviewed.
+This is the backend. User-facing commands (`/topics`, `/drop-topic`) come in a follow-up PR once the foundation is reviewed.
 
 ## Background
 
@@ -75,7 +73,7 @@ The overlap window (graduate_at=26, evict_at=30) gives `resolve_dirty()` time to
 
 ## Safety
 
-1. **Mandatory fallback.** If the union-find result exceeds `max_tokens` or is ≥ input tokens, falls back to `super().summarize()` (recursive). The union-find path can never produce a worse result than the existing system.
+1. **Mandatory fallback.** If the union-find result exceeds `max_tokens` or is ≥ input tokens, falls back to `super().summarize()` (recursive). Worst case, you get the current system.
 2. **Stale-safety preserved.** `summarize_end()` stale check works identically. The `_fed_count` mechanism triggers a full forest rebuild when `done_messages` changes (shrinks, is cleared, or is replaced by a previous summarization result).
 3. **Same tokenizer.** Inherits `self.token_count = self.models[0].token_count` from `ChatSummary.__init__()`.
 4. **Stable root ordering.** `roots()` returns clusters in insertion order via a tracked `_root_order` list, ensuring deterministic `render()` output across calls.
@@ -112,7 +110,7 @@ Tested on 17 real aider conversations (136 paired observation points where both 
 | Cost ratio | 1.14× (union-find uses slightly more tokens due to per-cluster prompts) |
 | Latency overhead | Sub-millisecond (TF-IDF embedding + union-find operations; LLM calls dominate) |
 
-The union-find backend produces quality-equivalent summaries. The value proposition is not "better summaries" — it's "structured context that enables visibility and selective control."
+The union-find backend produces quality-equivalent summaries. The value is structured context: visibility into what the model remembers, and selective control over what it forgets.
 
 ## Follow-up (not in this PR)
 
